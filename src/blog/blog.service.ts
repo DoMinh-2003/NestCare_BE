@@ -13,4 +13,8 @@ export class BlogsService {
   async findAllBlogs(): Promise<Blog[]> {
     return this.blogRepository.find();
   }
+
+  async findBlog(id: string): Promise<Blog | null> {
+    return await this.blogRepository.findOne({ where: { id } });
+  }
 }

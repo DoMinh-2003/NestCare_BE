@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, HttpStatus, Param } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { BlogsService } from './blog.service';
 import { Roles } from 'src/auth/decorators/roles.decorator';
@@ -14,5 +14,19 @@ export class BlogsController {
   @Get()
   async findAllBlogs() {
     return this.blogService.findAllBlogs();
+  }
+
+  @Public()
+  @Get(':id')
+  async findBlogById(@Param('id') id: string) {
+    const blog = await this.blogService.findBlog(id);
+    if (!blog) {
+      return {
+        success: false,
+        status: HttpStatus.NOT_FOUND,
+        message: 'Blog not found',
+      };
+    }
+    return blog;
   }
 }
