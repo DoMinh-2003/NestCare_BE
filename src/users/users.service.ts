@@ -5,7 +5,6 @@ import { User } from './model/user.entity';
 import * as bcrypt from 'bcrypt';
 import { Role } from 'src/common/enums/role.enum';
 
-
 @Injectable()
 export class UsersService {
   constructor(
@@ -21,11 +20,11 @@ export class UsersService {
     const user = await this.userRepository.findOne({
       where: { username, isDeleted: false },
     });
-  
+
     if (user && (await bcrypt.compare(password, user.password))) {
       return user; // Nếu mật khẩu đúng, trả về user
     }
-  
+
     return null; // Nếu sai, trả về null
   }
 
@@ -34,7 +33,7 @@ export class UsersService {
     return this.userRepository.findOne({ where: { username } });
   }
 
-  async findByID(id: number): Promise<User | null> {
+  async findByID(id: string): Promise<User | null> {
     return this.userRepository.findOne({ where: { id } });
   }
 
@@ -43,10 +42,10 @@ export class UsersService {
     // Tạo người dùng mới từ payload
 
     const newUser = this.userRepository.create({
-      ...payload, 
-      role: Role.User,  // Nếu không có role, mặc định là User
+      ...payload,
+      role: Role.User, // Nếu không có role, mặc định là User
     });
-    const savedUser = this.userRepository.save(newUser); 
+    const savedUser = this.userRepository.save(newUser);
     return savedUser instanceof Array ? savedUser[0] : savedUser;
   }
 }
