@@ -1,4 +1,3 @@
-import { async } from './../node_modules/rxjs/src/internal/scheduler/async';
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -10,16 +9,19 @@ import { APP_GUARD } from '@nestjs/core';
 import { RolesGuard } from './auth/guard/roles.guard';
 import { AuthGuard } from './auth/guard/auth.guard';
 import { User } from './users/model/user.entity';
+import { BlogsModule } from './blog/blog.module';
 
 @Module({
-  imports: [AuthModule, UsersModule,
+  imports: [
+    AuthModule,
+    UsersModule,
 
     ConfigModule.forRoot({
       isGlobal: true,
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
+      useFactory: (configService: ConfigService) => ({
         type: 'mysql',
         host: configService.get('DB_HOST'),
         port: +configService.get('DB_PORT'),
@@ -31,18 +33,19 @@ import { User } from './users/model/user.entity';
       }),
       inject: [ConfigService],
     }),
-
+    BlogsModule,
   ],
   controllers: [AppController],
-  providers: [AppService,
+  providers: [
+    AppService,
     {
       provide: APP_GUARD,
-      useClass: AuthGuard, 
+      useClass: AuthGuard,
     },
     {
       provide: APP_GUARD,
       useClass: RolesGuard,
-    }
+    },
   ],
 })
 export class AppModule {}
