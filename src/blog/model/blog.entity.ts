@@ -19,14 +19,17 @@ export class Blog {
   @ManyToOne(() => User, (user) => user.blogs)
   author: User;
 
+  @Column({ nullable: true })
+  authorId: string;
+
   @Column()
   description: string;
 
   @Column('text')
   content: string;
 
-  @Column({ default: false })
-  isPublished: boolean;
+  @Column({ type: 'tinyint', width: 1, default: 0 })
+  isPublished: number;
 
   @CreateDateColumn()
   createdAt: Date;
