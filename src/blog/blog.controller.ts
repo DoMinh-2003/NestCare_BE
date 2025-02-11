@@ -7,6 +7,7 @@ import {
   NotFoundException,
   Param,
   Post,
+  Request,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { BlogsService } from './blog.service';
@@ -15,14 +16,23 @@ import { Role } from 'src/common/enums/role.enum';
 import { Public } from 'src/auth/decorators/public.decorator';
 import { Api } from 'src/common/api';
 import { formatResponse } from 'src/utils';
-import SearchWithPaginationDto from './dto/searchWithPagination';
 import { SearchPaginationResponseModel } from 'src/common/models';
 import { Blog } from './model/blog.entity';
+import { CreateBlogDto, SearchWithPaginationDto } from './dto';
 
 @ApiTags('Blogs')
 @Controller(Api.blog)
 export class BlogsController {
   constructor(private readonly blogService: BlogsService) {}
+
+  @ApiBearerAuth()
+  @Public()
+  @Post('create')
+  async createBlog(@Body() model: CreateBlogDto, @Request() req) {
+    console.log(model, req.user)
+    const blog = await this.blogService.createBlog(model, req.user);
+    return formatResponse<Blog>(blog);
+  }
 
   @Public()
   @HttpCode(HttpStatus.OK)
@@ -40,6 +50,6 @@ export class BlogsController {
     if (!blog) {
       throw new NotFoundException('Blog not found');
     }
-    return formatResponse(blog);
+    return formatResponse<Blog>(blog);
   }
 }

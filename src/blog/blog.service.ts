@@ -1,11 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Blog } from './model/blog.entity';
-import SearchWithPaginationDto from './dto/searchWithPagination';
 import { SearchPaginationResponseModel } from 'src/common/models';
-import SearchBlogDto from './dto/search.dto';
-import { formatPaginationResult } from 'src/utils/helpers';
+import { formatPaginationResult, isEmptyObject } from 'src/utils/helpers';
+import { CreateBlogDto, SearchBlogDto, SearchWithPaginationDto } from './dto';
+import { CustomHttpException } from 'src/common/exceptions';
 
 @Injectable()
 export class BlogsService {
@@ -13,6 +13,27 @@ export class BlogsService {
     @InjectRepository(Blog)
     private readonly blogRepository: Repository<Blog>,
   ) {}
+
+  async createBlog(model: CreateBlogDto, user): Promise<Blog> {
+    if (isEmptyObject(model)) {
+      throw new HttpException('Model data is empty', HttpStatus.NOT_FOUND);
+    }
+
+    const existingBlog = await this.blogRepository.findOne({
+      where: { title: model.title },
+    });
+    if (existingBlog) {
+      throw new CustomHttpException(
+        HttpStatus.BAD_REQUEST,
+        `A blog with this title: "${model.title}" already exists`,
+      );
+    }
+    const newBlog = this.blogRepository.create({
+      ...model,
+      authorId: 'bf3ffcde-e7c0-11ef-9cac-00155d808014',
+    });
+    return await this.blogRepository.save(newBlog);
+  }
 
   async findBlogs(
     model: SearchWithPaginationDto,
