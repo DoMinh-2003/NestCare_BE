@@ -14,7 +14,7 @@ export default class CreateBlogDto {
     content: string,
     createdAt: Date = new Date(),
     updatedAt: Date = new Date(),
-    isPublished: number = 0,
+    isPublished: number = 1,
   ) {
     this.title = title;
     this.categoryId = categoryId;
