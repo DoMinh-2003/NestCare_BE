@@ -27,3 +27,7 @@ export const formatPaginationResult = <T>(
 
   return result;
 };
+
+export const isEmptyObject = (obj: any): boolean => {
+  return !Object.keys(obj).length;
+};
