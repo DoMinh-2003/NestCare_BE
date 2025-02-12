@@ -9,6 +9,7 @@ import {
   Param,
   Post,
   Put,
+  Req,
   Request,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
@@ -20,7 +21,7 @@ import { Api } from 'src/common/api';
 import { formatResponse } from 'src/utils';
 import { SearchPaginationResponseModel } from 'src/common/models';
 import { Blog } from './model/blog.entity';
-import { CreateBlogDto, SearchWithPaginationDto } from './dto';
+import { CreateBlogDto, SearchWithPaginationDto, UpdateBlogDto } from './dto';
 
 @ApiTags('Blogs')
 @Controller(Api.blog)
@@ -53,6 +54,15 @@ export class BlogsController {
       throw new NotFoundException('Blog not found');
     }
     return formatResponse<Blog>(blog);
+  }
+
+  @Put(':id')
+  async updateBlog(
+    @Param('id') id: string,
+    @Body() model: UpdateBlogDto,
+    @Req() req,
+  ) {
+    return this.blogService.updateBlog(id, model, req.user);
   }
 
   @Public()

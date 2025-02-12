@@ -1,10 +1,15 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Not, Repository } from 'typeorm';
 import { Blog } from './model/blog.entity';
 import { SearchPaginationResponseModel } from 'src/common/models';
 import { formatPaginationResult, isEmptyObject } from 'src/utils/helpers';
-import { CreateBlogDto, SearchBlogDto, SearchWithPaginationDto } from './dto';
+import {
+  CreateBlogDto,
+  SearchBlogDto,
+  SearchWithPaginationDto,
+  UpdateBlogDto,
+} from './dto';
 import { CustomHttpException } from 'src/common/exceptions';
 
 @Injectable()
@@ -75,6 +80,34 @@ export class BlogsService {
 
   async findBlog(id: string): Promise<Blog | null> {
     return await this.blogRepository.findOne({ where: { id } });
+  }
+
+  async updateBlog(id: string, model: UpdateBlogDto, user): Promise<Blog> {
+    const blog = await this.findBlog(id);
+
+    if (!blog) {
+      throw new CustomHttpException(
+        HttpStatus.NOT_FOUND,
+        `A blog with this id: "${id}" does not exist`,
+      );
+    }
+
+    if (model.title) {
+      const existingBlog = await this.blogRepository.findOne({
+        where: { title: model.title, id: Not(id) },
+      });
+      if (existingBlog) {
+        throw new CustomHttpException(
+          HttpStatus.BAD_REQUEST,
+          `A blog with title "${model.title}" already exists.`,
+        );
+      }
+    }
+
+    // Chỉ cập nhật các trường được truyền vào
+    const updatedBlog = Object.assign(blog, model, { updatedAt: new Date() });
+
+    return await this.blogRepository.save(updatedBlog);
   }
 
   async deleteBlog(id: string): Promise<boolean> {
