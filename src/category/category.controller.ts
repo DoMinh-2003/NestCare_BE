@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, NotFoundException, Param, Post, Request } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, NotFoundException, Param, Post, Request } from '@nestjs/common';
 import { CategoryService } from './category.service';
 import { Category } from './category.entity';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
@@ -38,4 +38,11 @@ export class CategoryController {
         }
         return formatResponse<Category>(category);
       }
+
+      @Public()
+        @Delete(':id')
+        async deleteCategory(@Param('id') id: string) {
+          const result = await this.categoryService.deleteCategory(id);
+          return formatResponse<boolean>(result);
+        }
 }
