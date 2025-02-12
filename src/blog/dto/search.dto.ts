@@ -1,9 +1,9 @@
-import { IsBoolean, IsString } from 'class-validator';
+import { IsInt, IsString } from 'class-validator';
 
 export default class SearchBlogDto {
   constructor(
     categoryId: string = '',
-    isPublished: boolean = false,
+    isPublished: number = 1,
     authorId: string = '',
   ) {
     this.categoryId = categoryId;
@@ -17,6 +17,6 @@ export default class SearchBlogDto {
   @IsString()
   public authorId: string;
 
-  @IsBoolean()
-  public isPublished: boolean;
+  @IsInt()
+    isPublished: number;
 }
