@@ -1,12 +1,14 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
   NotFoundException,
   Param,
   Post,
+  Put,
   Request,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
@@ -29,7 +31,7 @@ export class BlogsController {
   @Public()
   @Post('create')
   async createBlog(@Body() model: CreateBlogDto, @Request() req) {
-    console.log(model, req.user)
+    console.log(model, req.user);
     const blog = await this.blogService.createBlog(model, req.user);
     return formatResponse<Blog>(blog);
   }
@@ -51,5 +53,12 @@ export class BlogsController {
       throw new NotFoundException('Blog not found');
     }
     return formatResponse<Blog>(blog);
+  }
+
+  @Public()
+  @Delete(':id')
+  async deleteBlog(@Param('id') id: string) {
+    const result = await this.blogService.deleteBlog(id);
+    return formatResponse<boolean>(result);
   }
 }

@@ -24,7 +24,7 @@ export class BlogsService {
     });
     if (existingBlog) {
       throw new CustomHttpException(
-        HttpStatus.BAD_REQUEST,
+        HttpStatus.CONFLICT,
         `A blog with this title: "${model.title}" already exists`,
       );
     }
@@ -51,8 +51,9 @@ export class BlogsService {
     //   query.andWhere('blog.categoryId = :categoryId', { categoryId });
     // }
 
-    const parsedIsPublished = Number(isPublished);
-    if (parsedIsPublished) {
+    const parsedIsPublished =
+      isPublished !== undefined ? Number(isPublished) : undefined;
+    if (parsedIsPublished !== undefined) {
       query.andWhere('blog.isPublished = :isPublished', {
         isPublished: parsedIsPublished,
       });
@@ -74,5 +75,17 @@ export class BlogsService {
 
   async findBlog(id: string): Promise<Blog | null> {
     return await this.blogRepository.findOne({ where: { id } });
+  }
+
+  async deleteBlog(id: string): Promise<boolean> {
+    const blog = await this.findBlog(id);
+    if (!blog) {
+      throw new CustomHttpException(
+        HttpStatus.BAD_REQUEST,
+        `A blog with this id: "${id}" not exists`,
+      );
+    }
+    await this.blogRepository.update(id, { isPublished: 0 });
+    return true;
   }
 }
