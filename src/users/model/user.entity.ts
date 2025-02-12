@@ -7,7 +7,7 @@ import {
 } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { Role } from 'src/common/enums/role.enum';
-import { Blog } from 'src/blog/model/blog.entity';
+import { Blog } from 'src/blog/blog.entity';
 import { v4 as uuidv4 } from 'uuid';
 
 @Entity()
