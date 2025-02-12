@@ -20,9 +20,13 @@ export class BlogsService {
   ) {}
 
   async createBlog(model: CreateBlogDto, user): Promise<Blog> {
-    if (isEmptyObject(model)) {
-      throw new HttpException('Model data is empty', HttpStatus.NOT_FOUND);
+    if(!model){
+        throw new CustomHttpException(HttpStatus.NOT_FOUND, 'You need to send data');
     }
+    if (isEmptyObject(model)) {
+        throw new CustomHttpException(HttpStatus.NOT_FOUND, 'Model data is empty');
+      }
+  
 
     const existingBlog = await this.blogRepository.findOne({
       where: { title: model.title },
