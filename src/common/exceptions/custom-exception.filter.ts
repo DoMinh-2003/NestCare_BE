@@ -10,21 +10,23 @@ export class CustomExceptionFilter implements ExceptionFilter {
 
     if (exception instanceof CustomHttpException) {
       response.status(exception.status).json({
-        status: exception.status,
+        success: false,
         message: exception.message,
-        errors: exception.errors,
+        errors: exception.errors || [],
       });
     } 
      else {
       // Xử lý lỗi không xác định
       response.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        success: false,
         message:
           exception instanceof Error
             ? exception.message
             : 'An unknown error occurred',
+        errors: [],
       });
     }
   }
+
 
 }

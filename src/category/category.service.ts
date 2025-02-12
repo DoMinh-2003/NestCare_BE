@@ -48,4 +48,10 @@ export class CategoryService {
 
     return result;
   }
+
+  async getCategory(id: string): Promise<Category | null> {
+    return await this.categoryRepository.findOne({
+      where: { id, isDeleted: 0 },
+    });
+    }
 }
