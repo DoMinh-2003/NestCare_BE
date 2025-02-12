@@ -20,7 +20,7 @@ import { Public } from 'src/auth/decorators/public.decorator';
 import { Api } from 'src/common/api';
 import { formatResponse } from 'src/utils';
 import { SearchPaginationResponseModel } from 'src/common/models';
-import { Blog } from './model/blog.entity';
+import { Blog } from './blog.entity';
 import { CreateBlogDto, SearchWithPaginationDto, UpdateBlogDto } from './dto';
 
 @ApiTags('Blogs')
@@ -42,14 +42,14 @@ export class BlogsController {
   @Post('search')
   async getBlogs(@Body() model: SearchWithPaginationDto) {
     const blogs: SearchPaginationResponseModel<Blog> =
-      await this.blogService.findBlogs(model);
+      await this.blogService.getBlogs(model);
     return formatResponse<SearchPaginationResponseModel<Blog>>(blogs);
   }
 
   @Public()
   @Get(':id')
   async findBlogById(@Param('id') id: string) {
-    const blog = await this.blogService.findBlog(id);
+    const blog = await this.blogService.getBlog(id);
     if (!blog) {
       throw new NotFoundException('Blog not found');
     }

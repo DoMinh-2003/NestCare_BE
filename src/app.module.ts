@@ -10,11 +10,14 @@ import { RolesGuard } from './auth/guard/roles.guard';
 import { AuthGuard } from './auth/guard/auth.guard';
 import { User } from './users/model/user.entity';
 import { BlogsModule } from './blog/blog.module';
+import { CategoryModule } from './category/category.module';
 
 @Module({
   imports: [
     AuthModule,
     UsersModule,
+    BlogsModule,
+    CategoryModule,
 
     ConfigModule.forRoot({
       isGlobal: true,
@@ -33,7 +36,6 @@ import { BlogsModule } from './blog/blog.module';
       }),
       inject: [ConfigService],
     }),
-    BlogsModule,
   ],
   controllers: [AppController],
   providers: [
