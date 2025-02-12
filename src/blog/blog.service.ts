@@ -82,6 +82,9 @@ export class BlogsService {
   }
 
   async updateBlog(id: string, model: UpdateBlogDto, user): Promise<Blog> {
+    if(!model){
+        throw new CustomHttpException(HttpStatus.NOT_FOUND, 'You need to send data');
+    }
     const blog = await this.getBlog(id);
 
     if (!blog) {
