@@ -77,4 +77,16 @@ export class CategoryService {
       where: { id, isDeleted: 0 },
     });
     }
+
+    async deleteCategory(id: string): Promise<boolean> {
+        const category = await this.getCategory(id);
+        if (!category) {
+          throw new CustomHttpException(
+            HttpStatus.BAD_REQUEST,
+            `A category with this id: "${id}" not exists`,
+          );
+        }
+        await this.categoryRepository.update(id, { isDeleted: 1 });
+        return true;
+      }
 }
