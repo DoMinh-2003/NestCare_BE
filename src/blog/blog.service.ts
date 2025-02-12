@@ -1,7 +1,7 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Not, Repository } from 'typeorm';
-import { Blog } from './model/blog.entity';
+import { Blog } from './blog.entity';
 import { SearchPaginationResponseModel } from 'src/common/models';
 import { formatPaginationResult, isEmptyObject } from 'src/utils/helpers';
 import {
@@ -40,7 +40,7 @@ export class BlogsService {
     return await this.blogRepository.save(newBlog);
   }
 
-  async findBlogs(
+  async getBlogs(
     model: SearchWithPaginationDto,
   ): Promise<SearchPaginationResponseModel<Blog>> {
     const searchCondition = {
@@ -56,14 +56,9 @@ export class BlogsService {
     //   query.andWhere('blog.categoryId = :categoryId', { categoryId });
     // }
 
-    const parsedIsPublished =
-      isPublished !== undefined ? Number(isPublished) : undefined;
-    if (parsedIsPublished !== undefined) {
       query.andWhere('blog.isPublished = :isPublished', {
-        isPublished: parsedIsPublished,
+        isPublished,
       });
-    }
-
     query.skip((pageNum - 1) * pageSize).take(pageSize);
 
     const [blogs, total] = await query.getManyAndCount();
@@ -78,12 +73,12 @@ export class BlogsService {
     return result;
   }
 
-  async findBlog(id: string): Promise<Blog | null> {
+  async getBlog(id: string): Promise<Blog | null> {
     return await this.blogRepository.findOne({ where: { id } });
   }
 
   async updateBlog(id: string, model: UpdateBlogDto, user): Promise<Blog> {
-    const blog = await this.findBlog(id);
+    const blog = await this.getBlog(id);
 
     if (!blog) {
       throw new CustomHttpException(
@@ -111,7 +106,7 @@ export class BlogsService {
   }
 
   async deleteBlog(id: string): Promise<boolean> {
-    const blog = await this.findBlog(id);
+    const blog = await this.getBlog(id);
     if (!blog) {
       throw new CustomHttpException(
         HttpStatus.BAD_REQUEST,
