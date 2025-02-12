@@ -1,10 +1,10 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, NotFoundException, Param, Post, Request } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, NotFoundException, Param, Post, Put, Req, Request } from '@nestjs/common';
 import { CategoryService } from './category.service';
 import { Category } from './category.entity';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Public } from 'src/auth/decorators/public.decorator';
 import { Api } from 'src/common/api';
-import { CreateCategoryDto, SearchWithPaginationDto } from './dto';
+import { CreateCategoryDto, SearchWithPaginationDto, UpdateCategoryDto } from './dto';
 import { SearchPaginationResponseModel } from 'src/common/models';
 import { formatResponse } from 'src/utils';
 
@@ -38,6 +38,21 @@ export class CategoryController {
         }
         return formatResponse<Category>(category);
       }
+
+    @Public()
+
+       @Put(':id')
+        async updateCategory(
+          @Param('id') id: string,
+          @Body() model: UpdateCategoryDto,
+          @Req() req,
+        ) {
+          const category =  await this.categoryService.updateCategory(id, model, req.user);
+          if (!category) {
+            throw new NotFoundException('Category not found');
+          }
+          return formatResponse<Category>(category);
+        }
 
       @Public()
         @Delete(':id')
