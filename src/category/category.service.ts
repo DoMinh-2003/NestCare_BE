@@ -5,7 +5,7 @@ import { Category } from './category.entity';
 import { SearchPaginationResponseModel } from 'src/common/models';
 import { formatPaginationResult, isEmptyObject } from 'src/utils/helpers';
 import { CustomHttpException } from 'src/common/exceptions';
-import { SearchCategoryDto, SearchWithPaginationDto } from './dto';
+import { CreateCategoryDto, SearchCategoryDto, SearchWithPaginationDto } from './dto';
 
 @Injectable()
 export class CategoryService {
@@ -13,6 +13,29 @@ export class CategoryService {
     @InjectRepository(Category)
     private readonly categoryRepository: Repository<Category>,
   ) {}
+
+  async createCategory(model: CreateCategoryDto, user): Promise<Category> {
+    if(!model){
+        throw new CustomHttpException(HttpStatus.NOT_FOUND, 'You need to send data');
+    }
+      if (isEmptyObject(model)) {
+        throw new CustomHttpException(HttpStatus.NOT_FOUND, 'Model data is empty');
+      }
+  
+      const existingCategory = await this.categoryRepository.findOne({
+        where: { name: model.name },
+      });
+      if (existingCategory) {
+        throw new CustomHttpException(
+          HttpStatus.CONFLICT,
+          `A category with this title: "${model.name}" already exists`,
+        );
+      }
+      const newCategory = this.categoryRepository.create({
+        ...model,
+      });
+      return await this.categoryRepository.save(newCategory);
+    }
 
   async getCategories(
     model: SearchWithPaginationDto,

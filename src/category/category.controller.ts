@@ -1,10 +1,10 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, NotFoundException, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, NotFoundException, Param, Post, Request } from '@nestjs/common';
 import { CategoryService } from './category.service';
 import { Category } from './category.entity';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Public } from 'src/auth/decorators/public.decorator';
 import { Api } from 'src/common/api';
-import { SearchWithPaginationDto } from './dto';
+import { CreateCategoryDto, SearchWithPaginationDto } from './dto';
 import { SearchPaginationResponseModel } from 'src/common/models';
 import { formatResponse } from 'src/utils';
 
@@ -13,6 +13,13 @@ import { formatResponse } from 'src/utils';
 export class CategoryController {
   constructor(private readonly categoryService: CategoryService) {}
 
+  @ApiBearerAuth()
+    @Public()
+    @Post('create')
+    async createCategory(@Body() model: CreateCategoryDto, @Request() req) {
+      const category = await this.categoryService.createCategory(model, req.user);
+      return formatResponse<Category>(category);
+    }
   @Public()
     @HttpCode(HttpStatus.OK)
     @Post('search')
