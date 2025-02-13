@@ -73,7 +73,7 @@ export class BlogsService {
       totalItems: total,
       totalPages: 0,
     });
-
+    console.log(result);
     return result;
   }
 
