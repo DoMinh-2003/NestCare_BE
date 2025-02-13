@@ -1,9 +1,11 @@
+import { Blog } from 'src/blog/blog.entity';
 import {
   Entity,
   Column,
   CreateDateColumn,
   UpdateDateColumn,
   PrimaryGeneratedColumn,
+  OneToMany,
 } from 'typeorm';
 
 @Entity()
@@ -25,4 +27,7 @@ export class Category {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @OneToMany(() => Blog, (blog) => blog.category) // 1 Category có nhiều Blog
+  blogs: Blog[];
 }
