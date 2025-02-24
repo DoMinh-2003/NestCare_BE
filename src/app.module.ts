@@ -11,6 +11,7 @@ import { AuthGuard } from './auth/guard/auth.guard';
 import { User } from './users/model/user.entity';
 import { BlogsModule } from './blog/blog.module';
 import { CategoryModule } from './category/category.module';
+import { ServicesModule } from './services/services.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { CategoryModule } from './category/category.module';
       }),
       inject: [ConfigService],
     }),
+    ServicesModule,
   ],
   controllers: [AppController],
   providers: [
