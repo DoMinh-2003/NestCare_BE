@@ -1,3 +1,4 @@
+import { Category } from 'src/category/category.entity';
 import { User } from 'src/users/model/user.entity';
 import {
   Entity,
@@ -6,6 +7,8 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   PrimaryGeneratedColumn,
+  OneToOne,
+  JoinColumn,
 } from 'typeorm';
 
 @Entity()
@@ -36,4 +39,7 @@ export class Blog {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @ManyToOne(() => Category, (category) => category.blogs, { onDelete: 'RESTRICT' })
+  category: Category;
 }
