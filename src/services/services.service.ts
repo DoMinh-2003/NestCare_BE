@@ -59,6 +59,9 @@ export class ServicesService {
       query.andWhere('services.isDeleted = :isDeleted', {
         isDeleted,
       });
+
+      query.orderBy('services.createdAt', 'DESC');
+
       query.skip((pageNum - 1) * pageSize).take(pageSize);
   
       const [services, total] = await query.getManyAndCount();
@@ -73,9 +76,11 @@ export class ServicesService {
       return result;
     }
 
-  findOne(id: number) {
-    return `This action returns a #${id} service`;
-  }
+  async getService(id: string): Promise<Services | null> {
+      return await this.servicesRepository.findOne({
+        where: { id, isDeleted: 0 },
+      });
+      }
 
   update(id: number, updateServiceDto) {
     return `This action updates a #${id} service`;

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpStatus, HttpCode } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpStatus, HttpCode, NotFoundException } from '@nestjs/common';
 import { ServicesService } from './services.service';
 import { Api } from 'src/common/api';
 import { Public } from 'src/auth/decorators/public.decorator';
@@ -36,10 +36,15 @@ export class ServicesController {
        }
    
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.servicesService.findOne(+id);
-  }
+  @Public()
+        @Get(':id')
+        async getService(@Param('id') id: string) {
+          const service = await this.servicesService.getService(id);
+          if (!service) {
+            throw new NotFoundException('Service not found');
+          }
+          return formatResponse<Services>(service);
+        }
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateServiceDto) {
