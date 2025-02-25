@@ -2,12 +2,13 @@ import { HttpStatus, Injectable } from '@nestjs/common';
 import CreateServicesDto from './dto/create.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Services } from './services.entity';
-import { Repository } from 'typeorm';
+import { Not, Repository } from 'typeorm';
 import { CustomHttpException } from 'src/common/exceptions';
 import { formatPaginationResult, isEmptyObject } from 'src/utils/helpers';
 import SearchWithPaginationDto from './dto/searchWithPagination.dto';
 import { SearchPaginationResponseModel } from 'src/common/models';
 import SearchServicesDto from './dto/search.dto';
+import UpdateServiceDto from './dto/update.dto';
 
 @Injectable()
 export class ServicesService {
@@ -82,9 +83,34 @@ export class ServicesService {
       });
       }
 
-  update(id: number, updateServiceDto) {
-    return `This action updates a #${id} service`;
-  }
+  async updateService(id: string, model: UpdateServiceDto, user): Promise<Services> {
+          
+          const service = await this.getService(id);
+      
+          if (!service) {
+            throw new CustomHttpException(
+              HttpStatus.NOT_FOUND,
+              `A service with this id: "${id}" does not exist`,
+            );
+          }
+      
+          if (model.name) {
+            const existingService = await this.servicesRepository.findOne({
+              where: { name: model.name, id: Not(id) },
+            });
+            if (existingService) {
+              throw new CustomHttpException(
+                HttpStatus.BAD_REQUEST,
+                `A serivce with name "${model.name}" already exists.`,
+              );
+            }
+          }
+      
+          // Chỉ cập nhật các trường được truyền vào
+          const updatedService = Object.assign(service, model, { updatedAt: new Date() });
+      
+          return await this.servicesRepository.save(updatedService);
+        }
 
   async deleteService(id: string): Promise<boolean> {
     const service = id;

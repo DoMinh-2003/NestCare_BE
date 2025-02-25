@@ -56,10 +56,10 @@ export class CategoryController {
           @Body() model: UpdateCategoryDto,
           @Req() req,
         ) {
+          if(!model){
+            throw new CustomHttpException(HttpStatus.BAD_REQUEST, 'You need to send data');
+        }
           const category =  await this.categoryService.updateCategory(id, model, req.user);
-          if (!category) {
-            throw new NotFoundException('Category not found');
-          }
           return formatResponse<Category>(category);
         }
 
