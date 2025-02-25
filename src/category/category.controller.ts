@@ -7,6 +7,8 @@ import { Api } from 'src/common/api';
 import { CreateCategoryDto, SearchWithPaginationDto, UpdateCategoryDto } from './dto';
 import { SearchPaginationResponseModel } from 'src/common/models';
 import { formatResponse } from 'src/utils';
+import { isEmptyObject } from 'src/utils/helpers';
+import { CustomHttpException } from 'src/common/exceptions';
 
 @ApiTags('Categories')
 @Controller(Api.category)
@@ -17,7 +19,11 @@ export class CategoryController {
     @Public()
     @Post('create')
     async createCategory(@Body() model: CreateCategoryDto, @Request() req) {
+      if(!model){
+        throw new CustomHttpException(HttpStatus.NOT_FOUND, 'You need to send data');
+    }
       const category = await this.categoryService.createCategory(model, req.user);
+
       return formatResponse<Category>(category);
     }
   @Public()

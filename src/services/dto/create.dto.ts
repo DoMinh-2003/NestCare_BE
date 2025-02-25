@@ -27,16 +27,16 @@ export default class CreateServicesDto {
   @IsString()
   name: string;
 
-  @IsOptional()
+  @IsNotEmpty()
   @IsString()
-  description?: string;
+  description: string;
 
   @IsDate()
   public createdAt: Date;
 
   @IsDate()
   public updatedAt: Date;
-  
+
   @IsNotEmpty()
   @IsInt()
   price: number;
