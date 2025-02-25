@@ -30,6 +30,9 @@ export class CategoryController {
     @HttpCode(HttpStatus.OK)
     @Post('search')
     async getCategories(@Body() model: SearchWithPaginationDto) {
+      if(!model){
+        throw new CustomHttpException(HttpStatus.NOT_FOUND, 'You need to send data');
+    }
       const categories: SearchPaginationResponseModel<Category> =
         await this.categoryService.getCategories(model);
       return formatResponse<SearchPaginationResponseModel<Category>>(categories);

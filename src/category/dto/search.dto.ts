@@ -1,7 +1,7 @@
-import { IsBoolean, IsString } from 'class-validator';
+import { IsNumber, IsString } from 'class-validator';
 
 export default class SearchCategoryDto {
-  constructor(keyword: string = '', isDeleted: boolean = false) {
+  constructor(keyword: string = '', isDeleted: number = 0) {
     this.keyword = keyword;
     this.isDeleted = isDeleted;
   }
@@ -9,6 +9,6 @@ export default class SearchCategoryDto {
   @IsString()
   public keyword: string;
 
-  @IsBoolean()
-  public isDeleted: boolean;
+  @IsNumber()
+  public isDeleted: number;
 }

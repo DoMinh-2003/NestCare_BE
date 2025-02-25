@@ -22,6 +22,7 @@ import { formatResponse } from 'src/utils';
 import { SearchPaginationResponseModel } from 'src/common/models';
 import { Blog } from './blog.entity';
 import { CreateBlogDto, SearchWithPaginationDto, UpdateBlogDto } from './dto';
+import { CustomHttpException } from 'src/common/exceptions';
 
 @ApiTags('Blogs')
 @Controller(Api.blog)
@@ -41,6 +42,9 @@ export class BlogsController {
   @HttpCode(HttpStatus.OK)
   @Post('search')
   async getBlogs(@Body() model: SearchWithPaginationDto) {
+    if(!model){
+      throw new CustomHttpException(HttpStatus.NOT_FOUND, 'You need to send data');
+  }
     const blogs: SearchPaginationResponseModel<Blog> =
       await this.blogService.getBlogs(model);
     return formatResponse<SearchPaginationResponseModel<Blog>>(blogs);
