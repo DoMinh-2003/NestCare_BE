@@ -63,6 +63,9 @@ export class BlogsService {
       query.andWhere('blog.isPublished = :isPublished', {
         isPublished,
       });
+
+      query.orderBy('blog.createdAt', 'DESC');
+
     query.skip((pageNum - 1) * pageSize).take(pageSize);
 
     const [blogs, total] = await query.getManyAndCount();
@@ -73,7 +76,6 @@ export class BlogsService {
       totalItems: total,
       totalPages: 0,
     });
-    console.log(result);
     return result;
   }
 

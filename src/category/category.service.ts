@@ -56,6 +56,9 @@ export class CategoryService {
     query.andWhere('category.isDeleted = :isDeleted', {
       isDeleted,
     });
+
+    query.orderBy('category.createdAt', 'DESC');
+
     query.skip((pageNum - 1) * pageSize).take(pageSize);
 
     const [categories, total] = await query.getManyAndCount();
