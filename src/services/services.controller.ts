@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpStatus, HttpCode, NotFoundException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpStatus, HttpCode, NotFoundException, Req, Put } from '@nestjs/common';
 import { ServicesService } from './services.service';
 import { Api } from 'src/common/api';
 import { Public } from 'src/auth/decorators/public.decorator';
@@ -7,6 +7,7 @@ import { CustomHttpException } from 'src/common/exceptions';
 import { Services } from './services.entity';
 import SearchWithPaginationDto from './dto/searchWithPagination.dto';
 import { SearchPaginationResponseModel } from 'src/common/models';
+import UpdateServiceDto from './dto/update.dto';
 
 @Controller(Api.services)
 export class ServicesController {
@@ -46,10 +47,20 @@ export class ServicesController {
           return formatResponse<Services>(service);
         }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateServiceDto) {
-    return this.servicesService.update(+id, updateServiceDto);
-  }
+  @Public()
+  
+         @Put(':id')
+          async updateService(
+            @Param('id') id: string,
+            @Body() model: UpdateServiceDto,
+            @Req() req,
+          ) {
+            if(!model){
+              throw new CustomHttpException(HttpStatus.BAD_REQUEST, 'You need to send data');
+          }
+            const service =  await this.servicesService.updateService(id, model, req.user);
+            return formatResponse<Services>(service);
+          }
 
   @Public()
         @Delete(':id')

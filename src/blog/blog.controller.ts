@@ -66,10 +66,10 @@ export class BlogsController {
     @Body() model: UpdateBlogDto,
     @Req() req,
   ) {
+    if(!model){
+      throw new CustomHttpException(HttpStatus.BAD_REQUEST, 'You need to send data');
+  }
     const blog =  await this.blogService.updateBlog(id, model, req.user);
-              if (!blog) {
-                throw new NotFoundException('Blog not found');
-              }
               return formatResponse<Blog>(blog);
   }
 
