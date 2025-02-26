@@ -4,7 +4,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Services } from './services.entity';
 import { Repository } from 'typeorm';
 import { CustomHttpException } from 'src/common/exceptions';
-import { isEmptyObject } from 'src/utils/helpers';
+import { formatPaginationResult, isEmptyObject } from 'src/utils/helpers';
+import SearchWithPaginationDto from './dto/searchWithPagination.dto';
+import { SearchPaginationResponseModel } from 'src/common/models';
+import SearchServicesDto from './dto/search.dto';
 
 @Injectable()
 export class ServicesService {
@@ -35,9 +38,40 @@ export class ServicesService {
     });
     return await this.servicesRepository.save(newCategory);
   }
-  findAll() {
-    return this.servicesRepository.find({});
-  }
+  async getSevices(
+      model: SearchWithPaginationDto,
+    ): Promise<SearchPaginationResponseModel<Services>> {
+      const searchCondition = {
+        ...new SearchServicesDto(),
+        ...model.searchCondition,
+      };
+      console.log(searchCondition);
+      const { keyword, isDeleted } = searchCondition;
+      const { pageNum, pageSize } = model.pageInfo;
+      const query = this.servicesRepository.createQueryBuilder('services');
+  
+      if (keyword) {
+        query.andWhere('services.name LIKE :keyword', {
+          keyword: `%${keyword}%`,
+        });
+      }
+  
+      query.andWhere('services.isDeleted = :isDeleted', {
+        isDeleted,
+      });
+      query.skip((pageNum - 1) * pageSize).take(pageSize);
+  
+      const [services, total] = await query.getManyAndCount();
+      const data = new SearchPaginationResponseModel<Services>();
+      const result = formatPaginationResult<Services>(data, services, {
+        pageNum,
+        pageSize,
+        totalItems: total,
+        totalPages: 0,
+      });
+  
+      return result;
+    }
 
   findOne(id: number) {
     return `This action returns a #${id} service`;
