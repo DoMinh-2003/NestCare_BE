@@ -81,7 +81,15 @@ export class ServicesService {
     return `This action updates a #${id} service`;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} service`;
+  async deleteService(id: string): Promise<boolean> {
+    const service = id;
+    if (!service) {
+      throw new CustomHttpException(
+        HttpStatus.BAD_REQUEST,
+        `A service with this id: "${id}" not exists`,
+      );
+    }
+    await this.servicesRepository.update(id, { isDeleted: 1 });
+    return true;
   }
 }

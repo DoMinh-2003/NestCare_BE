@@ -46,8 +46,10 @@ export class ServicesController {
     return this.servicesService.update(+id, updateServiceDto);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.servicesService.remove(+id);
-  }
+  @Public()
+        @Delete(':id')
+        async deleteService(@Param('id') id: string) {
+          const result = await this.servicesService.deleteService(id);
+          return formatResponse<boolean>(result);
+        }
 }
