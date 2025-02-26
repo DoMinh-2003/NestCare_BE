@@ -19,6 +19,8 @@ import { ServicesModule } from './services/services.module';
     UsersModule,
     BlogsModule,
     CategoryModule,
+    ServicesModule,
+
 
     ConfigModule.forRoot({
       isGlobal: true,
@@ -37,7 +39,6 @@ import { ServicesModule } from './services/services.module';
       }),
       inject: [ConfigService],
     }),
-    ServicesModule,
   ],
   controllers: [AppController],
   providers: [

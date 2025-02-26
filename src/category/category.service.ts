@@ -15,9 +15,7 @@ export class CategoryService {
   ) {}
 
   async createCategory(model: CreateCategoryDto, user): Promise<Category> {
-    if(!model){
-        throw new CustomHttpException(HttpStatus.NOT_FOUND, 'You need to send data');
-    }
+    
       if (isEmptyObject(model)) {
         throw new CustomHttpException(HttpStatus.NOT_FOUND, 'Model data is empty');
       }

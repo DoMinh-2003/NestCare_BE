@@ -1,16 +1,28 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpStatus } from '@nestjs/common';
 import { ServicesService } from './services.service';
+import { Api } from 'src/common/api';
+import { Public } from 'src/auth/decorators/public.decorator';
+import { formatResponse, isEmptyObject } from 'src/utils/helpers';
+import { CustomHttpException } from 'src/common/exceptions';
+import { Services } from './services.entity';
 
-@Controller('services')
+@Controller(Api.services)
 export class ServicesController {
   constructor(private readonly servicesService: ServicesService) {}
 
-  @Post()
-  create(@Body() createServiceDto) {
-    return this.servicesService.create(createServiceDto);
+  @Public()
+  @Post('create')
+  async create(@Body() model) {
+    if(!model){
+      throw new CustomHttpException(HttpStatus.NOT_FOUND, 'You need to send data');
+  }
+    const service = await this.servicesService.createService(model);
+    
+          return formatResponse<Services>(service);
   }
 
-  @Get()
+      @Public()
+  @Get('search')
   findAll() {
     return this.servicesService.findAll();
   }
