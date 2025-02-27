@@ -77,8 +77,10 @@ export class PackagesService {
     return result;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} package`;
+  async getPackage(id: string): Promise<Packages | null> {
+    return await this.packagesRepository.findOne({
+      where: { id, isDeleted: 0 },
+    });
   }
 
   update(id: number, updatePackageDto: UpdatePackageDto) {
