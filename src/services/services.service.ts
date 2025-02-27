@@ -1,14 +1,11 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
-import CreateServicesDto from './dto/create.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Services } from './services.entity';
 import { Not, Repository } from 'typeorm';
 import { CustomHttpException } from 'src/common/exceptions';
 import { formatPaginationResult, isEmptyObject } from 'src/utils/helpers';
-import SearchWithPaginationDto from './dto/searchWithPagination.dto';
 import { SearchPaginationResponseModel } from 'src/common/models';
-import SearchServicesDto from './dto/search.dto';
-import UpdateServiceDto from './dto/update.dto';
+import { CreateServicesDto, SearchServicesDto, SearchWithPaginationDto, UpdateServiceDto } from './dto';
 
 @Injectable()
 export class ServicesService {
@@ -48,7 +45,9 @@ export class ServicesService {
       const { keyword, isDeleted } = searchCondition;
       const { pageNum, pageSize } = model.pageInfo;
       const query = this.servicesRepository.createQueryBuilder('services');
-  
+      if(pageNum <=0){
+        throw new CustomHttpException(HttpStatus.BAD_REQUEST, 'Page num must start with 1');
+      }
       if (keyword) {
         query.andWhere('services.name LIKE :keyword', {
           keyword: `%${keyword}%`,

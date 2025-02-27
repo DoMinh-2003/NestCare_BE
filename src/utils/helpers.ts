@@ -1,3 +1,5 @@
+import { HttpStatus } from '@nestjs/common';
+import { CustomHttpException } from 'src/common/exceptions';
 import {
   PaginationResponseModel,
   SearchPaginationResponseModel,
@@ -30,4 +32,17 @@ export const formatPaginationResult = <T>(
 
 export const isEmptyObject = (obj: any): boolean => {
   return !Object.keys(obj).length;
+};
+
+export const validatePaginationInput = (model: any) => {
+  if (!model) {
+    throw new CustomHttpException(HttpStatus.NOT_FOUND, 'You need to send data');
+  }
+
+  if (model.pageInfo.pageNum <= 0 || model.pageInfo.pageSize <= 0) {
+    throw new CustomHttpException(
+      HttpStatus.BAD_REQUEST,
+      'Page num and page size must be equal or greater than 1',
+    );
+  }
 };
