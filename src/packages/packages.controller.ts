@@ -9,13 +9,15 @@ import {
   HttpStatus,
   HttpCode,
   NotFoundException,
+  Put,
+  Req,
 } from '@nestjs/common';
 import { PackagesService } from './packages.service';
 import { Public } from 'src/auth/decorators/public.decorator';
 import { CustomHttpException } from 'src/common/exceptions';
 import { Packages } from './package.entity';
 import { SearchPaginationResponseModel } from 'src/common/models';
-import { CreatePackageDto, SearchWithPaginationDto } from './dto';
+import { CreatePackageDto, SearchWithPaginationDto, UpdatePackageDto } from './dto';
 import { formatResponse, validatePaginationInput } from 'src/utils';
 import { Api } from 'src/common/api';
 
@@ -57,6 +59,27 @@ export class PackagesController {
       }
       return formatResponse<Packages>(item);
     }
+
+    @Public()
+      @Put(':id')
+      async updateService(
+        @Param('id') id: string,
+        @Body() model: UpdatePackageDto,
+        @Req() req,
+      ) {
+        if (!model) {
+          throw new CustomHttpException(
+            HttpStatus.BAD_REQUEST,
+            'You need to send data',
+          );
+        }
+        const item = await this.packagesService.updatePackage(
+          id,
+          model,
+          req.user,
+        );
+        return formatResponse<Packages>(item);
+      }
 
  
     @Public()
