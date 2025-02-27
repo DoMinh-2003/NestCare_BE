@@ -87,7 +87,15 @@ export class PackagesService {
     return `This action updates a #${id} package`;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} package`;
+  async deletePackage(id: string): Promise<boolean> {
+    const item = await this.getPackage(id);
+    if (!item) {
+      throw new CustomHttpException(
+        HttpStatus.BAD_REQUEST,
+        `A package with this id: "${id}" not exists`,
+      );
+    }
+    await this.packagesRepository.update(id, { isDeleted: 1 });
+    return true;
   }
 }

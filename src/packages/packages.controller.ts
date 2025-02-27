@@ -59,8 +59,10 @@ export class PackagesController {
     }
 
  
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.packagesService.remove(+id);
-  }
+    @Public()
+    @Delete(':id')
+    async deletePackage(@Param('id') id: string) {
+      const result = await this.packagesService.deletePackage(id);
+      return formatResponse<boolean>(result);
+    }
 }
