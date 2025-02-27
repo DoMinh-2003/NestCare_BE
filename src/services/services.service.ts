@@ -109,15 +109,15 @@ export class ServicesService {
           return await this.servicesRepository.save(updatedService);
         }
 
-  async deleteService(id: string): Promise<boolean> {
-    const service = id;
-    if (!service) {
-      throw new CustomHttpException(
-        HttpStatus.BAD_REQUEST,
-        `A service with this id: "${id}" not exists`,
-      );
-    }
-    await this.servicesRepository.update(id, { isDeleted: 1 });
-    return true;
-  }
+        async deleteService(id: string): Promise<boolean> {
+          const service = await this.getService(id);
+          if (!service) {
+            throw new CustomHttpException(
+              HttpStatus.BAD_REQUEST,
+              `A service with this id: "${id}" not exists`,
+            );
+          }
+          await this.servicesRepository.update(id, { isDeleted: 1 });
+          return true;
+        }
 }
