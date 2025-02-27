@@ -3,5 +3,6 @@ export const Api = {
   users: '/api/users',
   category: 'api/categories',
   services: 'api/services',
+  packages: 'api/packages',
 };
 
