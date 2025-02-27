@@ -13,6 +13,7 @@ import { BlogsModule } from './blog/blog.module';
 import { CategoryModule } from './category/category.module';
 import { ServicesModule } from './services/services.module';
 import { PackagesModule } from './packages/packages.module';
+import { MedicationModule } from './medication/medication.module';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { PackagesModule } from './packages/packages.module';
       inject: [ConfigService],
     }),
     PackagesModule,
+    MedicationModule,
   ],
   controllers: [AppController],
   providers: [
