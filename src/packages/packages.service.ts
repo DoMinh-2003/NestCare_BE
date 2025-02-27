@@ -2,10 +2,12 @@ import { HttpStatus, Injectable } from '@nestjs/common';
 import { UpdatePackageDto } from './dto/update-package.dto';
 import CreatePackageDto from './dto/create.dto';
 import { CustomHttpException } from 'src/common/exceptions';
-import { isEmptyObject } from 'src/utils/helpers';
+import { formatPaginationResult, isEmptyObject } from 'src/utils/helpers';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Packages } from './package.entity';
+import { SearchPackagesDto, SearchWithPaginationDto } from './dto';
+import { SearchPaginationResponseModel } from 'src/common/models';
 
 @Injectable()
 export class PackagesService {
@@ -37,8 +39,42 @@ export class PackagesService {
     return await this.packagesRepository.save(newPackage);
   }
 
-  findAll() {
-    return `This action returns all packages`;
+  async getPackages(
+    model: SearchWithPaginationDto,
+  ): Promise<SearchPaginationResponseModel<Packages>> {
+    const searchCondition = {
+      ...new SearchPackagesDto(),
+      ...model.searchCondition,
+    };
+    console.log(searchCondition);
+    const { keyword, isDeleted } = searchCondition;
+    const { pageNum, pageSize } = model.pageInfo;
+    const query = this.packagesRepository.createQueryBuilder('packages');
+
+    if (keyword) {
+      query.andWhere('packages.name LIKE :keyword', {
+        keyword: `%${keyword}%`,
+      });
+    }
+
+    query.andWhere('packages.isDeleted = :isDeleted', {
+      isDeleted,
+    });
+
+    query.orderBy('packages.createdAt', 'DESC');
+
+    query.skip((pageNum - 1) * pageSize).take(pageSize);
+
+    const [packages, total] = await query.getManyAndCount();
+    const data = new SearchPaginationResponseModel<Packages>();
+    const result = formatPaginationResult<Packages>(data, packages, {
+      pageNum,
+      pageSize,
+      totalItems: total,
+      totalPages: 0,
+    });
+
+    return result;
   }
 
   findOne(id: number) {

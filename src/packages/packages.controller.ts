@@ -3,19 +3,19 @@ import {
   Get,
   Post,
   Body,
-  Patch,
   Param,
   Delete,
   Request,
   HttpStatus,
+  HttpCode,
 } from '@nestjs/common';
 import { PackagesService } from './packages.service';
-import { UpdatePackageDto } from './dto/update-package.dto';
 import { Public } from 'src/auth/decorators/public.decorator';
 import { CustomHttpException } from 'src/common/exceptions';
-import { formatResponse } from 'src/utils';
 import { Packages } from './package.entity';
-import CreatePackageDto from './dto/create.dto';
+import { SearchPaginationResponseModel } from 'src/common/models';
+import { CreatePackageDto, SearchWithPaginationDto } from './dto';
+import { formatResponse, validatePaginationInput } from 'src/utils';
 
 @Controller('api/packages')
 export class PackagesController {
@@ -35,21 +35,23 @@ export class PackagesController {
     return formatResponse<Packages>(item);
   }
 
-  @Get()
-  findAll() {
-    return this.packagesService.findAll();
-  }
+   @Public()
+         @HttpCode(HttpStatus.OK)
+         @Post('search')
+         async getServices(@Body() model: SearchWithPaginationDto) {
+          validatePaginationInput(model);
+           const packages: SearchPaginationResponseModel<Packages> =
+             await this.packagesService.getPackages(model);
+           return formatResponse<SearchPaginationResponseModel<Packages>>(packages);
+         }
+     
 
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.packagesService.findOne(+id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updatePackageDto: UpdatePackageDto) {
-    return this.packagesService.update(+id, updatePackageDto);
-  }
-
+ 
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.packagesService.remove(+id);
