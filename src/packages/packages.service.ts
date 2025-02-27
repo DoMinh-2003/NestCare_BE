@@ -1,12 +1,10 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
-import { UpdatePackageDto } from './dto/update-package.dto';
-import CreatePackageDto from './dto/create.dto';
 import { CustomHttpException } from 'src/common/exceptions';
 import { formatPaginationResult, isEmptyObject } from 'src/utils/helpers';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Not, Repository } from 'typeorm';
 import { Packages } from './package.entity';
-import { SearchPackagesDto, SearchWithPaginationDto } from './dto';
+import { CreatePackageDto, SearchPackagesDto, SearchWithPaginationDto, UpdatePackageDto } from './dto';
 import { SearchPaginationResponseModel } from 'src/common/models';
 
 @Injectable()
@@ -83,9 +81,34 @@ export class PackagesService {
     });
   }
 
-  update(id: number, updatePackageDto: UpdatePackageDto) {
-    return `This action updates a #${id} package`;
-  }
+  async updatePackage(id: string, model: UpdatePackageDto, user): Promise<Packages> {
+            
+            const item = await this.getPackage(id);
+        
+            if (!item) {
+              throw new CustomHttpException(
+                HttpStatus.NOT_FOUND,
+                `A package with this id: "${id}" does not exist`,
+              );
+            }
+        
+            if (model.name) {
+              const existingPackage = await this.packagesRepository.findOne({
+                where: { name: model.name, id: Not(id) },
+              });
+              if (existingPackage) {
+                throw new CustomHttpException(
+                  HttpStatus.BAD_REQUEST,
+                  `A package with name "${model.name}" already exists.`,
+                );
+              }
+            }
+        
+            // Chỉ cập nhật các trường được truyền vào
+            const updatedPackage = Object.assign(item, model, { updatedAt: new Date() });
+        
+            return await this.packagesRepository.save(updatedPackage);
+          }
 
   async deletePackage(id: string): Promise<boolean> {
     const item = await this.getPackage(id);
