@@ -12,6 +12,7 @@ import { User } from './users/model/user.entity';
 import { BlogsModule } from './blog/blog.module';
 import { CategoryModule } from './category/category.module';
 import { ServicesModule } from './services/services.module';
+import { PackagesModule } from './packages/packages.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { ServicesModule } from './services/services.module';
       }),
       inject: [ConfigService],
     }),
+    PackagesModule,
   ],
   controllers: [AppController],
   providers: [

@@ -18,26 +18,24 @@ export class ServicesService {
   ) {}
 
   async createService(model: CreateServicesDto) {
-    if(!model){
-      throw new CustomHttpException(HttpStatus.NOT_FOUND, 'You need to send data');
-  }
+   
   if (isEmptyObject(model)) {
     throw new CustomHttpException(HttpStatus.NOT_FOUND, 'Model data is empty');
   }
 
-    const existingCategory = await this.servicesRepository.findOne({
+    const existingPackage = await this.servicesRepository.findOne({
       where: { name: model.name },
     });
-    if (existingCategory) {
+    if (existingPackage) {
       throw new CustomHttpException(
         HttpStatus.CONFLICT,
         `A service with this name: "${model.name}" already exists`,
       );
     }
-    const newCategory = this.servicesRepository.create({
+    const newPackage = this.servicesRepository.create({
       ...model,
     });
-    return await this.servicesRepository.save(newCategory);
+    return await this.servicesRepository.save(newPackage);
   }
   async getSevices(
       model: SearchWithPaginationDto,

@@ -14,8 +14,8 @@ export class Services {
   @Column()
   name: string;
 
-    @Column()
-    price: number;
+  @Column('decimal', { precision: 10, scale: 2 })
+  price: number;
 
   @Column()
   description: string;
@@ -28,6 +28,7 @@ export class Services {
 
   @UpdateDateColumn()
   updatedAt: Date;
-
-  
 }
+
+
+
