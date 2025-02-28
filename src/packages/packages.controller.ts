@@ -19,17 +19,21 @@ import { Packages } from './package.entity';
 import { SearchPaginationResponseModel } from 'src/common/models';
 import {
   CreatePackageDto,
+  SearchPackagesDto,
   SearchWithPaginationDto,
   UpdatePackageDto,
 } from './dto';
 import { formatResponse, validatePaginationInput } from 'src/utils';
 import { Api } from 'src/common/api';
+import { ApiBearerAuth, ApiBody } from '@nestjs/swagger';
 
 @Controller(Api.packages)
 export class PackagesController {
   constructor(private readonly packagesService: PackagesService) {}
 
   @Public()
+    @ApiBearerAuth()
+  @ApiBody({type: CreatePackageDto})
   @Post('create')
   async createPackage(@Body() model: CreatePackageDto, @Request() req) {
     if (!model) {
@@ -44,6 +48,7 @@ export class PackagesController {
   }
 
   @Public()
+    @ApiBody({type: SearchPackagesDto})
   @HttpCode(HttpStatus.OK)
   @Post('search')
   async getServices(@Body() model: SearchWithPaginationDto) {
@@ -64,6 +69,8 @@ export class PackagesController {
   }
 
   @Public()
+  @ApiBearerAuth()
+  @ApiBody({type: UpdatePackageDto})
   @Put(':id')
   async updateService(
     @Param('id') id: string,
@@ -81,6 +88,7 @@ export class PackagesController {
   }
 
   @Public()
+  @ApiBearerAuth()
   @Delete(':id')
   async deletePackage(@Param('id') id: string) {
     const result = await this.packagesService.deletePackage(id);
