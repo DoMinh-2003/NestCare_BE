@@ -4,5 +4,6 @@ export const Api = {
   category: 'api/categories',
   services: 'api/services',
   packages: 'api/packages',
+  medication: 'api/medication'
 };
 

@@ -3,9 +3,14 @@ import { UpdateMedicationDto } from './dto/update-medication.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Medication } from './medication.entity';
 import { Repository } from 'typeorm';
-import { CreateMedicationDto } from './dto';
-import { isEmptyObject } from 'src/utils';
+import {
+  CreateMedicationDto,
+  SearchMedicationsDto,
+  SearchWithPaginationDto,
+} from './dto';
+import { formatPaginationResult, isEmptyObject } from 'src/utils';
 import { CustomHttpException } from 'src/common/exceptions';
+import { SearchPaginationResponseModel } from 'src/common/models';
 
 @Injectable()
 export class MedicationService {
@@ -37,8 +42,42 @@ export class MedicationService {
     return await this.medicationRepository.save(newMedication);
   }
 
-  findAll() {
-    return `This action returns all medication`;
+  async getMedications(
+    model: SearchWithPaginationDto,
+  ): Promise<SearchPaginationResponseModel<Medication>> {
+    const searchCondition = {
+      ...new SearchMedicationsDto(),
+      ...model.searchCondition,
+    };
+    console.log(searchCondition);
+    const { keyword, isDeleted } = searchCondition;
+    const { pageNum, pageSize } = model.pageInfo;
+    const query = this.medicationRepository.createQueryBuilder('medication');
+
+    if (keyword) {
+      query.andWhere('medication.name LIKE :keyword', {
+        keyword: `%${keyword}%`,
+      });
+    }
+
+    query.andWhere('medication.isDeleted = :isDeleted', {
+      isDeleted,
+    });
+
+    query.orderBy('medication.createdAt', 'DESC');
+
+    query.skip((pageNum - 1) * pageSize).take(pageSize);
+
+    const [medications, total] = await query.getManyAndCount();
+    const data = new SearchPaginationResponseModel<Medication>();
+    const result = formatPaginationResult<Medication>(data, medications, {
+      pageNum,
+      pageSize,
+      totalItems: total,
+      totalPages: 0,
+    });
+
+    return result;
   }
 
   findOne(id: number) {

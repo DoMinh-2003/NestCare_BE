@@ -1,2 +1,4 @@
 import CreateMedicationDto from "./create.dto";
-export {CreateMedicationDto} 
+import SearchMedicationsDto from "./search.dto";
+import SearchWithPaginationDto from "./searchWithPagination.dto";
+export {CreateMedicationDto, SearchWithPaginationDto, SearchMedicationsDto} 
