@@ -22,10 +22,6 @@ import {
   
     @Column('decimal', { precision: 10, scale: 2 })
     price: number;
-  
-    @Column({type: 'integer'})
-    slots: number;
-
 
     @Column()
     description: string;

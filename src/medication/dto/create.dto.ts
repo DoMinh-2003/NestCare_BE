@@ -4,14 +4,16 @@ import {
   IsOptional,
   IsDate,
   IsInt,
+  IsNumber,
 } from 'class-validator';
 
-export default class CreatePackageDto {
+export default class CreateMedicationDto {
   constructor(
     name: string = '',
     description: string = '',
     createdAt: Date = new Date(),
     updatedAt: Date = new Date(),
+    dosage: string = '',
     price: number = 0,
     isDeleted: number = 0,
   ) {
@@ -20,6 +22,7 @@ export default class CreatePackageDto {
     this.createdAt = createdAt;
     this.updatedAt = updatedAt;
     this.price = price;
+    this.dosage = dosage;
     this.isDeleted = isDeleted;
   }
 
@@ -31,6 +34,9 @@ export default class CreatePackageDto {
   @IsString()
   description: string;
 
+  @IsString()
+  dosage: string;
+
   @IsDate()
   public createdAt: Date;
 
@@ -38,7 +44,7 @@ export default class CreatePackageDto {
   public updatedAt: Date;
 
   @IsNotEmpty()
-  @IsInt()
+  @IsNumber({ maxDecimalPlaces: 2 })
   price: number;
 
   @IsOptional()
