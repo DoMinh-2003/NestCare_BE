@@ -23,12 +23,16 @@ import {
   SearchWithPaginationDto,
   UpdateServiceDto,
 } from './dto';
+import { ApiBearerAuth, ApiBody, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Services')
 @Controller(Api.services)
 export class ServicesController {
   constructor(private readonly servicesService: ServicesService) {}
 
   @Public()
+    @ApiBody({type: CreateServicesDto})
+  @ApiBearerAuth()
   @Post('create')
   async create(@Body() model: CreateServicesDto) {
     if (!model) {
@@ -69,6 +73,8 @@ export class ServicesController {
   }
 
   @Public()
+  @ApiBearerAuth()
+  @ApiBody({type: UpdateServiceDto})
   @Put(':id')
   async updateService(
     @Param('id') id: string,
@@ -90,6 +96,7 @@ export class ServicesController {
   }
 
   @Public()
+    @ApiBearerAuth()
   @Delete(':id')
   async deleteService(@Param('id') id: string) {
     const result = await this.servicesService.deleteService(id);
