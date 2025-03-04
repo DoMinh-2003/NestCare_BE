@@ -19,12 +19,6 @@ export class Blog {
   @Column()
   title: string;
 
-  @ManyToOne(() => User, (user) => user.blogs)
-  author: User;
-
-  @Column({ nullable: true })
-  authorId: string;
-
   @Column()
   description: string;
 

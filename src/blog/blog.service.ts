@@ -39,7 +39,6 @@ export class BlogsService {
     }
     const newBlog = this.blogRepository.create({
       ...model,
-      authorId: 'bf3ffcde-e7c0-11ef-9cac-00155d808014',
     });
     return await this.blogRepository.save(newBlog);
   }
@@ -52,7 +51,7 @@ export class BlogsService {
       ...model.searchCondition,
     };
     console.log(searchCondition);
-    const { categoryId, isPublished, authorId } = searchCondition;
+    const { categoryId, isPublished } = searchCondition;
     const { pageNum, pageSize } = model.pageInfo;
     const query = this.blogRepository.createQueryBuilder('blog');
 
