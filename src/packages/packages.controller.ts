@@ -15,7 +15,7 @@ import {
 import { PackagesService } from './packages.service';
 import { Public } from 'src/auth/decorators/public.decorator';
 import { CustomHttpException } from 'src/common/exceptions';
-import { Packages } from './package.entity';
+import { Packages } from './entity/package.entity';
 import { SearchPaginationResponseModel } from 'src/common/models';
 import {
   CreatePackageDto,
@@ -25,25 +25,28 @@ import {
 } from './dto';
 import { formatResponse, validatePaginationInput } from 'src/utils';
 import { Api } from 'src/common/api';
-import { ApiBearerAuth, ApiBody } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiResponse } from '@nestjs/swagger';
 
 @Controller(Api.packages)
 export class PackagesController {
   constructor(private readonly packagesService: PackagesService) {}
 
-  @Public()
-    @ApiBearerAuth()
-  @ApiBody({type: CreatePackageDto})
-  @Post('create')
+  @ApiBearerAuth()
+  @ApiBody({ type: CreatePackageDto })
+  @Post()
   async createPackage(@Body() model: CreatePackageDto, @Request() req) {
+    // Kiểm tra xem dữ liệu có hợp lệ không
     if (!model) {
       throw new CustomHttpException(
         HttpStatus.NOT_FOUND,
         'You need to send data',
       );
     }
+
+    // Tạo gói dịch vụ mới thông qua service
     const item = await this.packagesService.createPackage(model);
 
+    // Trả về kết quả sau khi tạo
     return formatResponse<Packages>(item);
   }
 
@@ -69,8 +72,19 @@ export class PackagesController {
   }
 
   @Public()
+  @ApiResponse({ status: 200, description: 'Get all packages with services and slots', type: [Packages] })
+  @Get()
+  async getAllPackages() {
+    try {
+      const packages = await this.packagesService.getAllPackages();
+      return formatResponse<Packages[]>(packages);
+    } catch (error) {
+      throw new CustomHttpException(HttpStatus.INTERNAL_SERVER_ERROR, error.message);
+    }
+  }
+
   @ApiBearerAuth()
-  @ApiBody({type: UpdatePackageDto})
+  @ApiBody({ type: UpdatePackageDto })
   @Put(':id')
   async updateService(
     @Param('id') id: string,
@@ -83,7 +97,11 @@ export class PackagesController {
         'You need to send data',
       );
     }
+
+    // Cập nhật gói dịch vụ thông qua service
     const item = await this.packagesService.updatePackage(id, model, req.user);
+
+    // Trả về kết quả sau khi cập nhật
     return formatResponse<Packages>(item);
   }
 

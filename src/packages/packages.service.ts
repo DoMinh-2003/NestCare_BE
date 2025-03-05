@@ -3,24 +3,32 @@ import { CustomHttpException } from 'src/common/exceptions';
 import { formatPaginationResult, isEmptyObject } from 'src/utils/helpers';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Not, Repository } from 'typeorm';
-import { Packages } from './package.entity';
-import { CreatePackageDto, SearchPackagesDto, SearchWithPaginationDto, UpdatePackageDto } from './dto';
+import { Packages } from './entity/package.entity';
+import {
+  CreatePackageDto,
+  SearchPackagesDto,
+  SearchWithPaginationDto,
+  UpdatePackageDto,
+} from './dto';
 import { SearchPaginationResponseModel } from 'src/common/models';
+import { PackageService } from './entity/packageService.entity';
+import { Services } from 'src/services/services.entity';
 
 @Injectable()
 export class PackagesService {
   constructor(
     @InjectRepository(Packages)
     private readonly packagesRepository: Repository<Packages>,
-  ) {}
-  async createPackage(model: CreatePackageDto) {
-    if (isEmptyObject(model)) {
-      throw new CustomHttpException(
-        HttpStatus.NOT_FOUND,
-        'Model data is empty',
-      );
-    }
 
+    @InjectRepository(PackageService)
+    private readonly packageServiceRepository: Repository<PackageService>,
+
+    @InjectRepository(Services)
+    private readonly servicesRepository: Repository<Services>,
+  ) {}
+
+  async createPackage(model: CreatePackageDto): Promise<Packages> {
+    // Kiểm tra xem gói dịch vụ đã tồn tại chưa
     const existingPackage = await this.packagesRepository.findOne({
       where: { name: model.name },
     });
@@ -30,12 +38,53 @@ export class PackagesService {
         `A package with this name: "${model.name}" already exists`,
       );
     }
+
+    // 1. Tạo package mới
     const newPackage = this.packagesRepository.create({
-      ...model,
+      name: model.name,
+      description: model.description,
+      price: model.price,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      isDeleted: 0,
     });
 
-    return await this.packagesRepository.save(newPackage);
+    // Lưu package vào cơ sở dữ liệu
+    const createdPackage = await this.packagesRepository.save(newPackage);
+
+    // 2. Tạo mối quan hệ với dịch vụ
+    for (const service of model.packageService) {
+      const serviceEntity = await this.servicesRepository.findOne({
+        where: { id: service.serviceId }, // Đảm bảo rằng bạn truyền vào đúng trường "id"
+      });
+      if (!serviceEntity) {
+        throw new CustomHttpException(
+          HttpStatus.BAD_REQUEST,
+          `Service with ID: ${service.serviceId} does not exist`,
+        );
+      }
+
+      const packageService = this.packageServiceRepository.create({
+        package: createdPackage,
+        service: serviceEntity,
+        slot: service.slot,
+      });
+
+      await this.packageServiceRepository.save(packageService);
+    }
+
+    return createdPackage;
   }
+
+
+ // Lấy tất cả các gói dịch vụ với các dịch vụ liên quan và slot
+ async getAllPackages(): Promise<Packages[]> {
+  const packages = await this.packagesRepository.find({
+    relations: ['packageServices', 'packageServices.service'],
+  });
+
+  return packages;
+}
 
   async getPackages(
     model: SearchWithPaginationDto,
@@ -81,34 +130,76 @@ export class PackagesService {
     });
   }
 
-  async updatePackage(id: string, model: UpdatePackageDto, user): Promise<Packages> {
-            
-            const item = await this.getPackage(id);
-        
-            if (!item) {
-              throw new CustomHttpException(
-                HttpStatus.NOT_FOUND,
-                `A package with this id: "${id}" does not exist`,
-              );
-            }
-        
-            if (model.name) {
-              const existingPackage = await this.packagesRepository.findOne({
-                where: { name: model.name, id: Not(id) },
-              });
-              if (existingPackage) {
-                throw new CustomHttpException(
-                  HttpStatus.BAD_REQUEST,
-                  `A package with name "${model.name}" already exists.`,
-                );
-              }
-            }
-        
-            // Chỉ cập nhật các trường được truyền vào
-            const updatedPackage = Object.assign(item, model, { updatedAt: new Date() });
-        
-            return await this.packagesRepository.save(updatedPackage);
+  async updatePackage(
+    id: string,
+    model: UpdatePackageDto,
+    user,
+  ): Promise<Packages> {
+    // 1. Tìm package bằng id
+    const item = await this.packagesRepository.findOne({
+      where: { id },
+      relations: ['packageServices'], // Lấy cả mối quan hệ với dịch vụ
+    });
+
+    if (!item) {
+      throw new CustomHttpException(
+        HttpStatus.NOT_FOUND,
+        `A package with this id: "${id}" does not exist`,
+      );
+    }
+
+    // 2. Kiểm tra xem có package nào có tên giống với gói hiện tại không
+    if (model.name) {
+      const existingPackage = await this.packagesRepository.findOne({
+        where: { name: model.name, id: Not(id) }, // Tìm tên trùng nhưng ID khác
+      });
+      if (existingPackage) {
+        throw new CustomHttpException(
+          HttpStatus.BAD_REQUEST,
+          `A package with name "${model.name}" already exists.`,
+        );
+      }
+    }
+
+    // 3. Chỉ cập nhật các trường được truyền vào
+    this.packagesRepository.merge(item, model);
+    const updatedPackage = await this.packagesRepository.save(item);
+
+    // 4. Cập nhật các dịch vụ liên kết nếu cần thiết
+    if (model.packageService) {
+      for (const service of model.packageService) {
+        const existingService = await this.packageServiceRepository.findOne({
+          where: {
+            package: updatedPackage,
+            service: { id: service.serviceId },
+          },
+        });
+        if (existingService) {
+          existingService.slot = service.slot; // Cập nhật số slot
+          await this.packageServiceRepository.save(existingService);
+        } else {
+          const serviceEntity = await this.servicesRepository.findOne({
+            where: { id: service.serviceId }, // Đảm bảo rằng bạn truyền vào đúng trường "id"
+          });
+          if (!serviceEntity) {
+            throw new CustomHttpException(
+              HttpStatus.BAD_REQUEST,
+              `Service with ID: ${service.serviceId} does not exist`,
+            );
           }
+
+          const newPackageService = this.packageServiceRepository.create({
+            package: updatedPackage,
+            service: serviceEntity,
+            slot: service.slot,
+          });
+          await this.packageServiceRepository.save(newPackageService);
+        }
+      }
+    }
+
+    return updatedPackage;
+  }
 
   async deletePackage(id: string): Promise<boolean> {
     const item = await this.getPackage(id);
