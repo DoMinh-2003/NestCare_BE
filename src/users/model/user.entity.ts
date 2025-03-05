@@ -1,9 +1,4 @@
-import {
-  Entity,
-  Column,
-  BeforeInsert,
-  PrimaryColumn,
-} from 'typeorm';
+import { Entity, Column, BeforeInsert, PrimaryColumn } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { Role } from 'src/common/enums/role.enum';
 import { v4 as uuidv4 } from 'uuid';
@@ -19,6 +14,17 @@ export class User {
   @Column()
   password: string;
 
+  @Column({ unique: true })
+  email: string;
+
+  @Column()
+  fullName: string;
+
+  @Column({ unique: true })
+  phone: string;
+
+  
+
   @Column({
     type: 'enum',
     enum: Role,
@@ -30,7 +36,8 @@ export class User {
   isDeleted: boolean;
 
   @BeforeInsert()
-  async hashPassword() {
+  async initializeUserBeforeInsert() {
+    this.generateId(); // Gọi generateId trước khi băm mật khẩu
     this.password = await bcrypt.hash(this.password, 10); // Hash mật khẩu với salt = 10
   }
   generateId() {
