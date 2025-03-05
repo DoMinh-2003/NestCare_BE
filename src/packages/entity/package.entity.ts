@@ -4,7 +4,9 @@ import {
     CreateDateColumn,
     UpdateDateColumn,
     PrimaryGeneratedColumn,
+    OneToMany,
   } from 'typeorm';
+import { PackageService } from './packageService.entity';
   
   export enum PeriodType {
     WEEKLY = 'weekly',
@@ -46,5 +48,8 @@ import {
   
     @UpdateDateColumn()
     updatedAt: Date;
+
+    @OneToMany(() => PackageService, (packageService) => packageService.package)
+    packageServices: PackageService[];
   }
   

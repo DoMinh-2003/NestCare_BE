@@ -1,47 +1,60 @@
+import { ApiProperty } from '@nestjs/swagger';
 import {
   IsNotEmpty,
   IsString,
-  IsOptional,
-  IsDate,
   IsInt,
+  IsArray,
+  IsUUID,
 } from 'class-validator';
 
-export default class CreatePackageDto {
-  constructor(
-    name: string = '',
-    description: string = '',
-    createdAt: Date = new Date(),
-    updatedAt: Date = new Date(),
-    price: number = 0,
-    isDeleted: number = 0,
-  ) {
-    this.name = name;
-    this.description = description;
-    this.createdAt = createdAt;
-    this.updatedAt = updatedAt;
-    this.price = price;
-    this.isDeleted = isDeleted;
-  }
+class PackageServiceDto {
+  @ApiProperty({
+    description: 'ID of the service',
+    example: 'service-id-1',
+  })
+  @IsNotEmpty()
+  @IsUUID()
+  serviceId: string;
 
+  @ApiProperty({
+    description: 'The number of slots for the service',
+    example: 5,
+  })
+  @IsNotEmpty()
+  @IsInt()
+  slot: number;
+}
+
+export default class CreatePackageDto {
+  @ApiProperty({
+    description: 'The name of the package',
+    example: 'Premium Package',
+  })
   @IsNotEmpty()
   @IsString()
   name: string;
 
+  @ApiProperty({
+    description: 'The description of the package',
+    example: 'This package includes premium services.',
+  })
   @IsNotEmpty()
   @IsString()
   description: string;
 
-  @IsDate()
-  public createdAt: Date;
-
-  @IsDate()
-  public updatedAt: Date;
-
+  @ApiProperty({
+    description: 'The price of the package',
+    example: 100,
+  })
   @IsNotEmpty()
   @IsInt()
   price: number;
 
-  @IsOptional()
-  @IsInt()
-  isDeleted?: number;
+  @ApiProperty({
+    description: 'A list of services associated with the package',
+    type: [PackageServiceDto],
+  })
+  @IsArray()
+  @IsNotEmpty()
+  packageService: PackageServiceDto[];
 }
