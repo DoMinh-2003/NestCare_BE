@@ -1,9 +1,11 @@
+import { PackageService } from 'src/packages/entity/packageService.entity';
 import {
   Entity,
   Column,
   CreateDateColumn,
   UpdateDateColumn,
   PrimaryGeneratedColumn,
+  OneToMany,
 } from 'typeorm';
 
 @Entity()
@@ -28,6 +30,9 @@ export class Services {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @OneToMany(() => PackageService, (packageService) => packageService.service)
+  packageServices: PackageService[];
 }
 
 

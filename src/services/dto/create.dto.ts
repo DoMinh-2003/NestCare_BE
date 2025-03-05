@@ -1,3 +1,4 @@
+import { ApiProperty } from '@nestjs/swagger';
 import {
   IsNotEmpty,
   IsString,
@@ -10,38 +11,37 @@ export default class CreateServicesDto {
   constructor(
     name: string = '',
     description: string = '',
-    createdAt: Date = new Date(),
-    updatedAt: Date = new Date(),
     price: number = 0,
-    isDeleted: number = 0,
   ) {
     this.name = name;
     this.description = description;
-    this.createdAt = createdAt;
-    this.updatedAt = updatedAt;
     this.price = price;
-    this.isDeleted = isDeleted;
   }
 
+  @ApiProperty({
+    description: 'The name of the product',
+    example: 'Product Name',
+  })
   @IsNotEmpty()
   @IsString()
   name: string;
 
+  @ApiProperty({
+    description: 'The description of the product',
+    example: 'Product Description',
+  })
   @IsNotEmpty()
   @IsString()
   description: string;
 
-  @IsDate()
-  public createdAt: Date;
-
-  @IsDate()
-  public updatedAt: Date;
-
+  
+  @ApiProperty({
+    description: 'The price of the product',
+    example: 100,
+  })
   @IsNotEmpty()
   @IsInt()
   price: number;
 
-  @IsOptional()
-  @IsInt()
-  isDeleted?: number;
+ 
 }
