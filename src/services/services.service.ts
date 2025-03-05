@@ -5,7 +5,12 @@ import { Not, Repository } from 'typeorm';
 import { CustomHttpException } from 'src/common/exceptions';
 import { formatPaginationResult, isEmptyObject } from 'src/utils/helpers';
 import { SearchPaginationResponseModel } from 'src/common/models';
-import { CreateServicesDto, SearchServicesDto, SearchWithPaginationDto, UpdateServiceDto } from './dto';
+import {
+  CreateServicesDto,
+  SearchServicesDto,
+  SearchWithPaginationDto,
+  UpdateServiceDto,
+} from './dto';
 
 @Injectable()
 export class ServicesService {
@@ -14,110 +19,105 @@ export class ServicesService {
     private readonly servicesRepository: Repository<Services>,
   ) {}
 
-  async createService(model: CreateServicesDto) {
-   
-  if (isEmptyObject(model)) {
-    throw new CustomHttpException(HttpStatus.NOT_FOUND, 'Model data is empty');
-  }
+  // Tạo mới dịch vụ
+  async createService(model: CreateServicesDto): Promise<Services> {
+    if (!model.name || !model.description || !model.price) {
+      throw new CustomHttpException(
+        HttpStatus.BAD_REQUEST,
+        'All fields are required',
+      );
+    }
 
-    const existingPackage = await this.servicesRepository.findOne({
+    const existingService = await this.servicesRepository.findOne({
       where: { name: model.name },
     });
-    if (existingPackage) {
+    if (existingService) {
       throw new CustomHttpException(
         HttpStatus.CONFLICT,
         `A service with this name: "${model.name}" already exists`,
       );
     }
-    const newPackage = this.servicesRepository.create({
-      ...model,
-    });
-    return await this.servicesRepository.save(newPackage);
+
+    const newService = this.servicesRepository.create({ ...model });
+    return await this.servicesRepository.save(newService);
   }
+
   async getSevices(
-      model: SearchWithPaginationDto,
-    ): Promise<SearchPaginationResponseModel<Services>> {
-      const searchCondition = {
-        ...new SearchServicesDto(),
-        ...model.searchCondition,
-      };
-      console.log(searchCondition);
-      const { keyword, isDeleted } = searchCondition;
-      const { pageNum, pageSize } = model.pageInfo;
-      const query = this.servicesRepository.createQueryBuilder('services');
-      if(pageNum <=0){
-        throw new CustomHttpException(HttpStatus.BAD_REQUEST, 'Page num must start with 1');
-      }
-      if (keyword) {
-        query.andWhere('services.name LIKE :keyword', {
-          keyword: `%${keyword}%`,
-        });
-      }
-  
-      query.andWhere('services.isDeleted = :isDeleted', {
-        isDeleted,
+    model: SearchWithPaginationDto,
+  ): Promise<SearchPaginationResponseModel<Services>> {
+    const searchCondition = {
+      ...new SearchServicesDto(),
+      ...model.searchCondition,
+    };
+    console.log(searchCondition);
+    const { keyword, isDeleted } = searchCondition;
+    const { pageNum, pageSize } = model.pageInfo;
+    const query = this.servicesRepository.createQueryBuilder('services');
+    if (pageNum <= 0) {
+      throw new CustomHttpException(
+        HttpStatus.BAD_REQUEST,
+        'Page num must start with 1',
+      );
+    }
+    if (keyword) {
+      query.andWhere('services.name LIKE :keyword', {
+        keyword: `%${keyword}%`,
       });
-
-      query.orderBy('services.createdAt', 'DESC');
-
-      query.skip((pageNum - 1) * pageSize).take(pageSize);
-  
-      const [services, total] = await query.getManyAndCount();
-      const data = new SearchPaginationResponseModel<Services>();
-      const result = formatPaginationResult<Services>(data, services, {
-        pageNum,
-        pageSize,
-        totalItems: total,
-        totalPages: 0,
-      });
-  
-      return result;
     }
 
+    query.andWhere('services.isDeleted = :isDeleted', {
+      isDeleted,
+    });
+
+    query.orderBy('services.createdAt', 'DESC');
+
+    query.skip((pageNum - 1) * pageSize).take(pageSize);
+
+    const [services, total] = await query.getManyAndCount();
+    const data = new SearchPaginationResponseModel<Services>();
+    const result = formatPaginationResult<Services>(data, services, {
+      pageNum,
+      pageSize,
+      totalItems: total,
+      totalPages: 0,
+    });
+
+    return result;
+  }
+
   async getService(id: string): Promise<Services | null> {
-      return await this.servicesRepository.findOne({
-        where: { id, isDeleted: 0 },
-      });
-      }
+    return await this.servicesRepository.findOne({
+      where: { id, isDeleted: 0 },
+    });
+  }
+  // Cập nhật dịch vụ
+  async updateService(id: string, model: UpdateServiceDto): Promise<Services> {
+    const service = await this.servicesRepository.findOne({ where: { id } });
+    if (!service) {
+      throw new CustomHttpException(
+        HttpStatus.NOT_FOUND,
+        `Service with id ${id} not found`,
+      );
+    }
 
-  async updateService(id: string, model: UpdateServiceDto, user): Promise<Services> {
-          
-          const service = await this.getService(id);
-      
-          if (!service) {
-            throw new CustomHttpException(
-              HttpStatus.NOT_FOUND,
-              `A service with this id: "${id}" does not exist`,
-            );
-          }
-      
-          if (model.name) {
-            const existingService = await this.servicesRepository.findOne({
-              where: { name: model.name, id: Not(id) },
-            });
-            if (existingService) {
-              throw new CustomHttpException(
-                HttpStatus.BAD_REQUEST,
-                `A serivce with name "${model.name}" already exists.`,
-              );
-            }
-          }
-      
-          // Chỉ cập nhật các trường được truyền vào
-          const updatedService = Object.assign(service, model, { updatedAt: new Date() });
-      
-          return await this.servicesRepository.save(updatedService);
-        }
+    const updatedService = Object.assign(service, model);
+    return await this.servicesRepository.save(updatedService);
+  }
 
-        async deleteService(id: string): Promise<boolean> {
-          const service = await this.getService(id);
-          if (!service) {
-            throw new CustomHttpException(
-              HttpStatus.BAD_REQUEST,
-              `A service with this id: "${id}" not exists`,
-            );
-          }
-          await this.servicesRepository.update(id, { isDeleted: 1 });
-          return true;
-        }
+  async deleteService(id: string): Promise<boolean> {
+    const service = await this.getService(id);
+    if (!service) {
+      throw new CustomHttpException(
+        HttpStatus.BAD_REQUEST,
+        `A service with this id: "${id}" not exists`,
+      );
+    }
+    await this.servicesRepository.update(id, { isDeleted: 1 });
+    return true;
+  }
+
+  // Lấy tất cả các dịch vụ
+  async getAllServices(): Promise<Services[]> {
+    return await this.servicesRepository.find();
+  }
 }
