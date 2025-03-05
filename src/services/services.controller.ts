@@ -30,21 +30,18 @@ import { ApiBearerAuth, ApiBody, ApiTags } from '@nestjs/swagger';
 export class ServicesController {
   constructor(private readonly servicesService: ServicesService) {}
 
-  @Public()
-    @ApiBody({type: CreateServicesDto})
+
   @ApiBearerAuth()
-  @Post('create')
+  @ApiBody({ type: CreateServicesDto })
+  @Post()
   async create(@Body() model: CreateServicesDto) {
     if (!model) {
-      throw new CustomHttpException(
-        HttpStatus.NOT_FOUND,
-        'You need to send data',
-      );
+      throw new CustomHttpException(HttpStatus.NOT_FOUND, 'You need to send data');
     }
     const service = await this.servicesService.createService(model);
-
-    return formatResponse<Services>(service);
+    return { statusCode: HttpStatus.CREATED, message: 'Service created successfully', data: service };
   }
+
 
   @Public()
   @HttpCode(HttpStatus.OK)
@@ -72,30 +69,26 @@ export class ServicesController {
     return formatResponse<Services>(service);
   }
 
-  @Public()
   @ApiBearerAuth()
-  @ApiBody({type: UpdateServiceDto})
+  @ApiBody({ type: UpdateServiceDto })
   @Put(':id')
-  async updateService(
-    @Param('id') id: string,
-    @Body() model: UpdateServiceDto,
-    @Req() req,
-  ) {
+  async updateService(@Param('id') id: string, @Body() model: UpdateServiceDto) {
     if (!model) {
-      throw new CustomHttpException(
-        HttpStatus.BAD_REQUEST,
-        'You need to send data',
-      );
+      throw new CustomHttpException(HttpStatus.BAD_REQUEST, 'You need to send data');
     }
-    const service = await this.servicesService.updateService(
-      id,
-      model,
-      req.user,
-    );
-    return formatResponse<Services>(service);
+
+    const service = await this.servicesService.updateService(id, model);
+    return { statusCode: HttpStatus.OK, message: 'Service updated successfully', data: service };
   }
 
   @Public()
+  @Get()
+  async getAllServices() {
+    const services = await this.servicesService.getAllServices();
+    return formatResponse<Services[]>(services);
+  }
+
+  
     @ApiBearerAuth()
   @Delete(':id')
   async deleteService(@Param('id') id: string) {
