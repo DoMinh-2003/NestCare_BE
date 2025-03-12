@@ -46,7 +46,7 @@ export class PackagesService {
       price: model.price,
       createdAt: new Date(),
       updatedAt: new Date(),
-      isDeleted: 0,
+      isDeleted: false,
     });
 
     // Lưu package vào cơ sở dữ liệu
@@ -86,6 +86,15 @@ export class PackagesService {
   return packages;
 }
 
+// async getAllPackagesByUser(): Promise<Packages[]> {
+//   const packages = await this.packagesRepository.find({
+//     where:{isDeleted: false},
+//     relations: ['packageServices', 'packageServices.service'],
+//   });
+
+//   return packages;
+// }
+
   async getPackages(
     model: SearchWithPaginationDto,
   ): Promise<SearchPaginationResponseModel<Packages>> {
@@ -123,10 +132,11 @@ export class PackagesService {
 
     return result;
   }
-
+ 
   async getPackage(id: string): Promise<Packages | null> {
     return await this.packagesRepository.findOne({
-      where: { id, isDeleted: 0 },
+      where: { id },
+      relations: ['packageServices', 'packageServices.service'],
     });
   }
 
@@ -201,7 +211,7 @@ export class PackagesService {
     return updatedPackage;
   }
 
-  async deletePackage(id: string): Promise<boolean> {
+  async deletePackage(id: string, isDeleted: boolean ): Promise<boolean> {
     const item = await this.getPackage(id);
     if (!item) {
       throw new CustomHttpException(
@@ -209,7 +219,7 @@ export class PackagesService {
         `A package with this id: "${id}" not exists`,
       );
     }
-    await this.packagesRepository.update(id, { isDeleted: 1 });
+    await this.packagesRepository.update(id, { isDeleted: isDeleted });
     return true;
   }
 }
