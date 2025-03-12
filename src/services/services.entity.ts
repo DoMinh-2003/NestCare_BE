@@ -22,8 +22,8 @@ export class Services {
   @Column()
   description: string;
 
-  @Column({ type: 'tinyint', width: 1, default: 0 })
-  isDeleted: number;
+  @Column({default: false })
+  isDeleted: boolean;
 
   @CreateDateColumn()
   createdAt: Date;

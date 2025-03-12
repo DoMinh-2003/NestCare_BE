@@ -87,7 +87,7 @@ export class ServicesService {
 
   async getService(id: string): Promise<Services | null> {
     return await this.servicesRepository.findOne({
-      where: { id, isDeleted: 0 },
+      where: { id},
     });
   }
   // Cập nhật dịch vụ
@@ -104,7 +104,7 @@ export class ServicesService {
     return await this.servicesRepository.save(updatedService);
   }
 
-  async deleteService(id: string): Promise<boolean> {
+  async deleteService(id: string,isDeleted: boolean): Promise<boolean> {
     const service = await this.getService(id);
     if (!service) {
       throw new CustomHttpException(
@@ -112,12 +112,17 @@ export class ServicesService {
         `A service with this id: "${id}" not exists`,
       );
     }
-    await this.servicesRepository.update(id, { isDeleted: 1 });
+    service.isDeleted = isDeleted; // Cập nhật trạng thái isDeleted
+    await this.servicesRepository.save(service);
     return true;
   }
 
   // Lấy tất cả các dịch vụ
-  async getAllServices(): Promise<Services[]> {
-    return await this.servicesRepository.find();
+  async getServicesAdmin(): Promise<Services[]> {
+      return this.servicesRepository.find();
   }
+
+  // async getAllServicesByUser(): Promise<Services[]> {
+  //   return this.servicesRepository.find({where: { isDeleted: false }});
+  // }
 }
