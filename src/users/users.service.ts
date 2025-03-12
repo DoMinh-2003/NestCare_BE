@@ -1,9 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './model/user.entity';
 import * as bcrypt from 'bcrypt';
 import { Role } from 'src/common/enums/role.enum';
+import { RegisterUserDto } from './dto/RegisterUserDto';
 
 @Injectable()
 export class UsersService {
@@ -15,6 +16,57 @@ export class UsersService {
   async findAll(): Promise<User[]> {
     return this.userRepository.find();
   }
+
+
+  // Hàm đăng ký người dùng
+  async registerUser(registerUserDto: RegisterUserDto): Promise<User> {
+    const { username, email, password, fullName, phone, role } = registerUserDto;
+    const user = new User();
+    user.username = username;
+    user.email = email;
+    user.password = password;
+    user.fullName = fullName;
+    user.phone = phone;
+    user.role = role;
+
+    // Tạo ID và mã hóa mật khẩu
+    await user.initializeUserBeforeInsert();
+
+    return this.userRepository.save(user);
+  }
+
+
+  // Hàm tìm người dùng theo ID
+
+  async findOne(id: string): Promise<User> {
+    const user = await this.userRepository.findOne({where: {id: id}});
+    if (!user) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+    return user;
+  }
+
+  // Hàm cập nhật người dùng
+  async update(id: string, updateUserDto: RegisterUserDto): Promise<User> {
+    const user = await this.findOne(id);
+    if (user) {
+      Object.assign(user, updateUserDto);
+      return this.userRepository.save(user);
+    }
+    throw new Error('User not found');
+  }
+
+ // Hàm toggle trạng thái isDeleted
+ async toggleDeleteStatus(id: string, isDeleted: boolean): Promise<void> {
+  const user = await this.userRepository.findOne({ where: { id } });
+
+  if (!user) {
+    throw new NotFoundException(`User with ID ${id} not found`);
+  }
+
+  user.isDeleted = isDeleted; // Cập nhật trạng thái isDeleted
+  await this.userRepository.save(user); // Lưu thay đổi vào cơ sở dữ liệu
+}
 
   async validateUser(username: string, password: string): Promise<User | null> {
     const user = await this.userRepository.findOne({
@@ -33,9 +85,9 @@ export class UsersService {
     return this.userRepository.findOne({ where: { username } });
   }
 
-  async findByID(id: string): Promise<User | null> {
-    return this.userRepository.findOne({ where: { id } });
-  }
+  // async findByID(id: string): Promise<User | null> {
+  //   return this.userRepository.findOne({ where: { id } });
+  // }
 
   // Tạo người dùng mới
   async createUser(payload: any): Promise<User> {
