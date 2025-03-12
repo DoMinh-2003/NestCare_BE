@@ -7,11 +7,12 @@ import {
     OneToMany,
   } from 'typeorm';
 import { PackageService } from './packageService.entity';
+import { UserPackages } from 'src/userPackages/entities/userPackages.entity';
   
   export enum PeriodType {
-    WEEKLY = 'weekly',
-    FULL_PREGNANCY = 'full_prenancy',
-    TRIMESTER = 'trimester'
+    WEEKLY = 'WEEKLY',
+    FULL_PREGNANCY = 'FULL_PREGNANCY',
+    TRIMESTER = 'TRIMESTER'
   }
   
   @Entity()
@@ -40,8 +41,8 @@ import { PackageService } from './packageService.entity';
     @Column({ type: 'tinyint', width: 1, default: 0 })
     alerts_included: number;
 
-    @Column({ type: 'tinyint', width: 1, default: 0 })
-    isDeleted: number;
+    @Column({default: false })
+    isDeleted: boolean;
   
     @CreateDateColumn()
     createdAt: Date;
@@ -51,5 +52,8 @@ import { PackageService } from './packageService.entity';
 
     @OneToMany(() => PackageService, (packageService) => packageService.package)
     packageServices: PackageService[];
+
+    @OneToMany(() => UserPackages, (userPackages) => userPackages.package)
+    userPackages: UserPackages[]; // Mối quan hệ với bảng UserPackages (người dùng mua gói)
   }
   

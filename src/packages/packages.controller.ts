@@ -26,10 +26,11 @@ import {
 import { formatResponse, validatePaginationInput } from 'src/utils';
 import { Api } from 'src/common/api';
 import { ApiBearerAuth, ApiBody, ApiResponse } from '@nestjs/swagger';
+import { ToggleDeleteDto } from 'src/common/models/ToggleDeleteDto';
 
 @Controller(Api.packages)
 export class PackagesController {
-  constructor(private readonly packagesService: PackagesService) {}
+  constructor(private readonly packagesService: PackagesService) { }
 
   @ApiBearerAuth()
   @ApiBody({ type: CreatePackageDto })
@@ -51,7 +52,7 @@ export class PackagesController {
   }
 
   @Public()
-    @ApiBody({type: SearchPackagesDto})
+  @ApiBody({ type: SearchPackagesDto })
   @HttpCode(HttpStatus.OK)
   @Post('search')
   async getServices(@Body() model: SearchWithPaginationDto) {
@@ -70,18 +71,30 @@ export class PackagesController {
     }
     return formatResponse<Packages>(item);
   }
-
-  @Public()
-  @ApiResponse({ status: 200, description: 'Get all packages with services and slots', type: [Packages] })
   @Get()
+  @ApiBearerAuth()
+  @ApiResponse({ status: 200, description: 'Get all packages with services and slots', type: [Packages] })
   async getAllPackages() {
     try {
       const packages = await this.packagesService.getAllPackages();
       return formatResponse<Packages[]>(packages);
     } catch (error) {
+      console.log(error);
       throw new CustomHttpException(HttpStatus.INTERNAL_SERVER_ERROR, error.message);
     }
   }
+
+  // @Get()
+  // @Public()
+  // @ApiResponse({ status: 200, description: 'Get all packages with services and slots', type: [Packages] })
+  // async getAllPackagesByUser() {
+  //   try {
+  //     const packages = await this.packagesService.getAllPackagesByUser();
+  //     return formatResponse<Packages[]>(packages);
+  //   } catch (error) {
+  //     throw new CustomHttpException(HttpStatus.INTERNAL_SERVER_ERROR, error.message);
+  //   }
+  // }
 
   @ApiBearerAuth()
   @ApiBody({ type: UpdatePackageDto })
@@ -107,9 +120,11 @@ export class PackagesController {
 
   @Public()
   @ApiBearerAuth()
-  @Delete(':id')
-  async deletePackage(@Param('id') id: string) {
-    const result = await this.packagesService.deletePackage(id);
+  @Put(':id/toggle-delete')
+  @ApiBody({ description: 'Toggle isDeleted status for the package', type: ToggleDeleteDto })
+  async deletePackage(@Param('id') id: string, @Body() toggleDeleteDto: ToggleDeleteDto,
+  ) {
+    const result = await this.packagesService.deletePackage(id,toggleDeleteDto.isDeleted);
     return formatResponse<boolean>(result);
   }
 }
