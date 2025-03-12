@@ -1,7 +1,9 @@
-import { Entity, Column, BeforeInsert, PrimaryColumn } from 'typeorm';
+import { Entity, Column, BeforeInsert, PrimaryColumn, OneToMany } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { Role } from 'src/common/enums/role.enum';
 import { v4 as uuidv4 } from 'uuid';
+import { FetalRecord } from 'src/fetal-records/entities/fetal-record.entity';
+import { UserPackages } from 'src/userPackages/entities/userPackages.entity';
 
 @Entity()
 export class User {
@@ -23,8 +25,6 @@ export class User {
   @Column({ unique: true })
   phone: string;
 
-  
-
   @Column({
     type: 'enum',
     enum: Role,
@@ -34,6 +34,12 @@ export class User {
 
   @Column({ default: false }) // Thêm trường isDeleted
   isDeleted: boolean;
+
+  @OneToMany(() => FetalRecord, (fetalRecord) => fetalRecord.mother)
+  fetalRecords: FetalRecord[]; // Mối quan hệ với bảng FetalRecord
+
+  @OneToMany(() => UserPackages, (userPackages) => userPackages.user)
+  userPackages: UserPackages[];  // Mối quan hệ với bảng UserPackages (mua gói)
 
   @BeforeInsert()
   async initializeUserBeforeInsert() {
