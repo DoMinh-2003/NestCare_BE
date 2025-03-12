@@ -9,18 +9,21 @@ import { APP_GUARD } from '@nestjs/core';
 import { RolesGuard } from './auth/guard/roles.guard';
 import { AuthGuard } from './auth/guard/auth.guard';
 import { User } from './users/model/user.entity';
-import { BlogsModule } from './blog/blog.module';
-import { CategoryModule } from './category/category.module';
+// import { BlogsModule } from './blog/blog.module';
+// import { CategoryModule } from './category/category.module';
+// import { MedicationModule } from './medication/medication.module';
 import { ServicesModule } from './services/services.module';
 import { PackagesModule } from './packages/packages.module';
-import { MedicationModule } from './medication/medication.module';
+import { FetalRecordsModule } from './fetal-records/fetal-records.module';
+import { UserPackagesModule } from './userPackages/userPackages.module';
 
 @Module({
   imports: [
     AuthModule,
     UsersModule,
-    BlogsModule,
-    CategoryModule,
+    // MedicationModule,
+    // BlogsModule,
+    // CategoryModule,
     ServicesModule,
 
 
@@ -42,7 +45,8 @@ import { MedicationModule } from './medication/medication.module';
       inject: [ConfigService],
     }),
     PackagesModule,
-    MedicationModule,
+    FetalRecordsModule,
+    UserPackagesModule,
   ],
   controllers: [AppController],
   providers: [
