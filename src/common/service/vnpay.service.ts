@@ -69,9 +69,8 @@ export class VnpayService {
     sortedParams['vnp_SecureHash'] = secureHash;
 
 
-    this.vnpUrl += '?' + qs.stringify(sortedParams, { encode: false });
-
-    return this.vnpUrl;
+    const paymentUrl = this.vnpUrl + '?' + qs.stringify(sortedParams, { encode: false });
+    return paymentUrl;
   }
   
   private sortObject(obj: Record<string, any>) {

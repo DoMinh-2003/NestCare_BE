@@ -20,7 +20,7 @@ export class UsersService {
 
   // Hàm đăng ký người dùng
   async registerUser(registerUserDto: RegisterUserDto): Promise<User> {
-    const { username, email, password, fullName, phone, role } = registerUserDto;
+    const { username, email, password, fullName, phone, role, image } = registerUserDto;
     const user = new User();
     user.username = username;
     user.email = email;
@@ -28,11 +28,16 @@ export class UsersService {
     user.fullName = fullName;
     user.phone = phone;
     user.role = role;
+    user.image = image;
 
     // Tạo ID và mã hóa mật khẩu
     await user.initializeUserBeforeInsert();
 
     return this.userRepository.save(user);
+  }
+
+  async findUsersByRole(role: Role): Promise<User[]> {
+    return this.userRepository.find({ where: { role, isDeleted: false } });
   }
 
 
