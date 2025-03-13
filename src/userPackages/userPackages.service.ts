@@ -65,7 +65,7 @@ export class UserPackagesService {
    async getUserPackagesByUser(userId: string): Promise<UserPackages[]> {
     return this.userPackagesRepository.find({
       where: { user: { id: userId }, isDeleted: false },
-      relations: ['package', 'fetalRecord'],  // Lấy thông tin gói dịch vụ và thai nhi
+      relations: ['package', 'user'],  // Lấy thông tin gói dịch vụ và thai nhi
     });
   }
 
@@ -75,7 +75,7 @@ export class UserPackagesService {
    async getUserPackagesByStatus(status: UserPackageStatus): Promise<UserPackages[]> {
     return this.userPackagesRepository.find({
       where: { status, isDeleted: false },
-      relations: ['package', 'fetalRecord', 'user'], // Lấy thông tin gói dịch vụ, thai nhi, và người dùng
+      relations: ['package', 'user'], // Lấy thông tin gói dịch vụ, thai nhi, và người dùng
     });
   }
     

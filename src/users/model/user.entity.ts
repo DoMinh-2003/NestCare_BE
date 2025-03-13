@@ -22,6 +22,9 @@ export class User {
   @Column()
   fullName: string;
 
+  @Column({ nullable: true })
+  image: string;
+
   @Column({ unique: true })
   phone: string;
 
@@ -31,6 +34,8 @@ export class User {
     default: Role.User,
   })
   role: Role;
+
+
 
   @Column({ default: false }) // Thêm trường isDeleted
   isDeleted: boolean;

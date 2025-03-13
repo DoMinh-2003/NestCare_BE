@@ -45,6 +45,11 @@ export class UsersController {
     return this.usersService.findOne(id);
   }
 
+  @Get('role/:role')
+  async getUsersByRole(@Param('role') role: Role) {
+    return this.usersService.findUsersByRole(role);
+  }
+
   @Put(':id')
   @ApiResponse({ status: 200, description: 'Update user details' })
   async update(
