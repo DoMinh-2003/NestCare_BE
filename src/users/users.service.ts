@@ -5,6 +5,7 @@ import { User } from './model/user.entity';
 import * as bcrypt from 'bcrypt';
 import { Role } from 'src/common/enums/role.enum';
 import { RegisterUserDto } from './dto/RegisterUserDto';
+import { UpdateUserDTO } from './dto/UpdateUserDTO';
 
 @Injectable()
 export class UsersService {
@@ -52,8 +53,9 @@ export class UsersService {
   }
 
   // Hàm cập nhật người dùng
-  async update(id: string, updateUserDto: RegisterUserDto): Promise<User> {
+  async update(id: string, updateUserDto: UpdateUserDTO): Promise<User> {
     const user = await this.findOne(id);
+    console.log(user);
     if (user) {
       Object.assign(user, updateUserDto);
       return this.userRepository.save(user);

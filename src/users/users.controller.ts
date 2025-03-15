@@ -20,6 +20,7 @@ import { Role } from 'src/common/enums/role.enum';
 import { RegisterUserDto } from './dto/RegisterUserDto';
 import { User } from './model/user.entity';
 import { ToggleDeleteDto } from '../common/models/ToggleDeleteDto';
+import { UpdateUserDTO } from './dto/UpdateUserDTO';
 @ApiBearerAuth()
 @ApiTags('Users')
 @Controller('api/users')
@@ -54,15 +55,19 @@ export class UsersController {
   @ApiResponse({ status: 200, description: 'Update user details' })
   async update(
     @Param('id') id: string,
-    @Body() updateUserDto: RegisterUserDto,
+    @Body() updateUserDto: UpdateUserDTO,
   ): Promise<User> {
     return this.usersService.update(id, updateUserDto);
   }
+
+
   @Put(':id/toggle-delete')
   @ApiBody({
     description: 'Toggle isDeleted status for the service',
     type: ToggleDeleteDto,
   })
+
+
   @ApiResponse({ status: 200, description: 'User status toggled successfully' })
   async toggleDeleteStatus(
     @Param('id') id: string,
