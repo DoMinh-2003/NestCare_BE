@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Appointment, AppointmentStatus } from './entities/appointment.entity';
@@ -8,14 +12,16 @@ import { CreateCheckupDto, ServiceUsedDto } from './dto/CreateCheckupDTO';
 import { CheckupRecord } from './entities/checkupRecord.entity';
 import { AppointmentServiceEntity } from './entities/appointmentService.entity';
 import { Services } from 'src/services/services.entity';
-import { UserPackages, UserPackageStatus } from 'src/userPackages/entities/userPackages.entity';
+import {
+  UserPackages,
+  UserPackageStatus,
+} from 'src/userPackages/entities/userPackages.entity';
 import { PackageService } from 'src/packages/entity/packageService.entity';
 import { VnpayService } from 'src/common/service/vnpay.service';
 import { MailService } from 'src/common/service/mail.service';
 import { MedicationBill } from './entities/medicationBill.entity';
 import { Medication } from 'src/medication/medication.entity';
 import { MedicationBillDetail } from './entities/medicationBillDetail.entity';
-
 
 @Injectable()
 export class AppointmentService {
@@ -53,14 +59,15 @@ export class AppointmentService {
     @InjectRepository(MedicationBillDetail)
     private readonly medicationBillDetailRepo: Repository<MedicationBillDetail>,
 
-     private vnpayService: VnpayService,
+    private vnpayService: VnpayService,
 
-     private mailService: MailService,
-    
+    private mailService: MailService,
   ) {}
 
   async bookAppointment(fetalRecordId: string, doctorId: string, date: Date) {
-    const fetalRecord = await this.fetalRecordRepo.findOne({ where: { id: fetalRecordId } });
+    const fetalRecord = await this.fetalRecordRepo.findOne({
+      where: { id: fetalRecordId },
+    });
     if (!fetalRecord) throw new NotFoundException('Fetal record not found');
 
     const doctor = await this.doctorRepo.findOne({ where: { id: doctorId } });
@@ -73,109 +80,119 @@ export class AppointmentService {
       status: AppointmentStatus.PENDING,
     });
 
-    this.mailService.sendWelcomeEmail(doctor.email, "Xác Nhận Lịch Khác Ngày " + date, "Bạn hãy vô xác nhận lịch khám của mẹ bầu vào ngày " + date);
+    this.mailService.sendWelcomeEmail(
+      doctor.email,
+      'Xác Nhận Lịch Khác Ngày ' + date,
+      'Bạn hãy vô xác nhận lịch khám của mẹ bầu vào ngày ' + date,
+    );
 
     return await this.appointmentRepo.save(appointment);
   }
 
-//   async updateAppointmentStatus(
-//     appointmentId: string,
-//     status: AppointmentStatus,
-//     checkupData?: CreateCheckupDto, // Dữ liệu khám nếu COMPLETED
-//   ) {
-//     const appointment = await this.appointmentRepo.findOne({
-//       where: { id: appointmentId },
-//       relations: ['fetalRecord', 'doctor'],
-//     });
-  
-//     if (!appointment) throw new NotFoundException('Appointment not found');
-  
-//     // Kiểm tra nếu status không hợp lệ
-//     if (!Object.values(AppointmentStatus).includes(status)) {
-//       throw new BadRequestException('Invalid appointment status');
-//     }
-  
-//     // Nếu là COMPLETED, yêu cầu dữ liệu khám từ bác sĩ
-//     if (status === AppointmentStatus.COMPLETED) {
-//       if (!checkupData) throw new BadRequestException('Checkup data is required for completion');
-  
-//       // Lưu hồ sơ khám
-//       const checkupRecord = this.checkupRecordRepo.create({
-//         fetalRecord: appointment.fetalRecord,
-//         appointment: appointment,
-//         ...checkupData,
-//       });
-//       await this.checkupRecordRepo.save(checkupRecord);
-  
-//       // Nếu có dịch vụ đã sử dụng, lưu vào DB
-//       if (checkupData.servicesUsed && checkupData.servicesUsed.length > 0) {
-//         const appointmentServices = await Promise.all(
-//           checkupData.servicesUsed.map(async (serviceUsed) => {
-//             const service = await this.serviceRepo.findOne({ where: { id: serviceUsed.serviceId } });
-//             if (!service) throw new NotFoundException(`Service with ID ${serviceUsed.serviceId} not found`);
-  
-//             return this.appointmentServiceRepo.create({
-//               appointment,
-//               service,
-//               price: service.price, // Lấy giá từ DB
-//               notes: serviceUsed.notes || '',
-//             });
-//           }),
-//         );
-  
-//         await this.appointmentServiceRepo.save(appointmentServices);
-//       }
-//     }
-  
-//     // Cập nhật trạng thái của appointment
-//     appointment.status = status;
-//     return await this.appointmentRepo.save(appointment);
-//   }
-  
+  //   async updateAppointmentStatus(
+  //     appointmentId: string,
+  //     status: AppointmentStatus,
+  //     checkupData?: CreateCheckupDto, // Dữ liệu khám nếu COMPLETED
+  //   ) {
+  //     const appointment = await this.appointmentRepo.findOne({
+  //       where: { id: appointmentId },
+  //       relations: ['fetalRecord', 'doctor'],
+  //     });
 
-async updateAppointmentStatus(
+  //     if (!appointment) throw new NotFoundException('Appointment not found');
+
+  //     // Kiểm tra nếu status không hợp lệ
+  //     if (!Object.values(AppointmentStatus).includes(status)) {
+  //       throw new BadRequestException('Invalid appointment status');
+  //     }
+
+  //     // Nếu là COMPLETED, yêu cầu dữ liệu khám từ bác sĩ
+  //     if (status === AppointmentStatus.COMPLETED) {
+  //       if (!checkupData) throw new BadRequestException('Checkup data is required for completion');
+
+  //       // Lưu hồ sơ khám
+  //       const checkupRecord = this.checkupRecordRepo.create({
+  //         fetalRecord: appointment.fetalRecord,
+  //         appointment: appointment,
+  //         ...checkupData,
+  //       });
+  //       await this.checkupRecordRepo.save(checkupRecord);
+
+  //       // Nếu có dịch vụ đã sử dụng, lưu vào DB
+  //       if (checkupData.servicesUsed && checkupData.servicesUsed.length > 0) {
+  //         const appointmentServices = await Promise.all(
+  //           checkupData.servicesUsed.map(async (serviceUsed) => {
+  //             const service = await this.serviceRepo.findOne({ where: { id: serviceUsed.serviceId } });
+  //             if (!service) throw new NotFoundException(`Service with ID ${serviceUsed.serviceId} not found`);
+
+  //             return this.appointmentServiceRepo.create({
+  //               appointment,
+  //               service,
+  //               price: service.price, // Lấy giá từ DB
+  //               notes: serviceUsed.notes || '',
+  //             });
+  //           }),
+  //         );
+
+  //         await this.appointmentServiceRepo.save(appointmentServices);
+  //       }
+  //     }
+
+  //     // Cập nhật trạng thái của appointment
+  //     appointment.status = status;
+  //     return await this.appointmentRepo.save(appointment);
+  //   }
+
+  async updateAppointmentStatus(
     appointmentId: string,
     status: AppointmentStatus,
   ) {
-    const appointment = await this.appointmentRepo.findOne({ where: { id: appointmentId } });
+    const appointment = await this.appointmentRepo.findOne({
+      where: { id: appointmentId },
+    });
     if (!appointment) throw new NotFoundException('Appointment not found');
-  
+
     if (!Object.values(AppointmentStatus).includes(status)) {
       throw new BadRequestException('Invalid appointment status');
     }
-  
+
     appointment.status = status;
     return await this.appointmentRepo.save(appointment);
   }
-  
-
 
   async startCheckup(appointmentId: string, servicesUsed: ServiceUsedDto[]) {
     const appointment = await this.appointmentRepo.findOne({
       where: { id: appointmentId },
       relations: ['fetalRecord', 'doctor', 'fetalRecord.user'],
     });
-  
+
     if (!appointment) throw new NotFoundException('Appointment not found');
-  
+
     const user = appointment.fetalRecord.mother;
     const userPackage = await this.userPackageRepo.findOne({
       where: { user, status: UserPackageStatus.PAID, isActive: true },
       relations: ['package', 'package.packageServices'],
     });
-  
+
     let totalCost = 0;
     const appointmentServices = await Promise.all(
       servicesUsed.map(async (serviceUsed) => {
-        const service = await this.serviceRepo.findOne({ where: { id: serviceUsed.serviceId } });
-        if (!service) throw new NotFoundException(`Service ${serviceUsed.serviceId} not found`);
-  
+        const service = await this.serviceRepo.findOne({
+          where: { id: serviceUsed.serviceId },
+        });
+        if (!service)
+          throw new NotFoundException(
+            `Service ${serviceUsed.serviceId} not found`,
+          );
+
         let price = service.price;
         let isInPackage = false; // Đánh dấu nếu dịch vụ có trong gói
-  
+
         if (userPackage) {
-          const packageService = userPackage.package.packageServices.find(ps => ps.service.id === service.id);
-          
+          const packageService = userPackage.package.packageServices.find(
+            (ps) => ps.service.id === service.id,
+          );
+
           if (packageService) {
             if (packageService.slot > 0) {
               packageService.slot--; // Trừ lượt sử dụng
@@ -185,12 +202,12 @@ async updateAppointmentStatus(
             }
           }
         }
-  
+
         // Nếu không có trong gói hoặc slot = 0, tính vào totalCost
         if (!isInPackage) {
           totalCost += service.price;
         }
-  
+
         return this.appointmentServiceRepo.create({
           appointment,
           service,
@@ -200,35 +217,39 @@ async updateAppointmentStatus(
         });
       }),
     );
-  
+
     await this.appointmentServiceRepo.save(appointmentServices);
     appointment.status = AppointmentStatus.IN_PROGRESS;
 
     const newAppointment = await this.appointmentRepo.save(appointment);
-  
-    if (totalCost > 0) {
-    //   return { message: 'Please make a payment', totalCost };
-      const param = `?appointmentId=${newAppointment.id}`
 
-      return await this.vnpayService.createPayment(newAppointment.id,param,totalCost);;
+    if (totalCost > 0) {
+      //   return { message: 'Please make a payment', totalCost };
+      const param = `?appointmentId=${newAppointment.id}`;
+
+      return await this.vnpayService.createPayment(
+        newAppointment.id,
+        param,
+        totalCost,
+      );
     }
-  
-    
+
     return newAppointment;
   }
-  
-  
 
-
-  async completeCheckup(appointmentId: string, checkupData: CreateCheckupDto, medications: { medicationId: string; quantity: number }[]) {
+  async completeCheckup(
+    appointmentId: string,
+    checkupData: CreateCheckupDto,
+    medications: { medicationId: string; quantity: number }[],
+  ) {
     const appointment = await this.appointmentRepo.findOne({
       where: { id: appointmentId },
       relations: ['fetalRecord', 'doctor'],
     });
-  
+
     if (!appointment) throw new NotFoundException('Appointment not found');
     if (!checkupData) throw new BadRequestException('Checkup data is required');
-  
+
     // Lưu kết quả khám
     const checkupRecord = this.checkupRecordRepo.create({
       fetalRecord: appointment.fetalRecord,
@@ -236,18 +257,24 @@ async updateAppointmentStatus(
       ...checkupData,
     });
     await this.checkupRecordRepo.save(checkupRecord);
-  
+
     // Tạo hóa đơn thuốc
     let totalPrice = 0;
-    const medicationBill = this.medicationBillRepo.create({ appointment, details: [] });
-  
+    const medicationBill = this.medicationBillRepo.create({
+      appointment,
+      details: [],
+    });
+
     for (const med of medications) {
-      const medication = await this.medicationRepo.findOne({ where: { id: med.medicationId } });
-      if (!medication) throw new NotFoundException(`Medication ${med.medicationId} not found`);
-  
+      const medication = await this.medicationRepo.findOne({
+        where: { id: med.medicationId },
+      });
+      if (!medication)
+        throw new NotFoundException(`Medication ${med.medicationId} not found`);
+
       const total = medication.price * med.quantity;
       totalPrice += total;
-  
+
       const detail = this.medicationBillDetailRepo.create({
         bill: medicationBill,
         medication,
@@ -255,43 +282,84 @@ async updateAppointmentStatus(
         price: medication.price,
         total,
       });
-  
+
       medicationBill.details.push(detail);
     }
-  
+
     medicationBill.totalPrice = totalPrice;
     await this.medicationBillRepo.save(medicationBill);
-  
+
     // Cập nhật trạng thái cuộc hẹn
     appointment.status = AppointmentStatus.COMPLETED;
     return await this.appointmentRepo.save(appointment);
   }
-  
 
-  
-
-  async getFetalRecordHistory(fetalRecordId: string) {
+  async getAppointmentsByFetalRecord(fetalRecordId: string) {
     const fetalRecord = await this.fetalRecordRepo.findOne({
       where: { id: fetalRecordId },
-      relations: ['checkupRecords'],
+      relations: [
+        'appointments',
+        'appointments.doctor',
+        'appointments.appointmentServices',
+        'appointments.medicationBills',
+      ],
     });
 
-    if (!fetalRecord) throw new NotFoundException('Fetal record not found');
+    if (!fetalRecord) {
+      throw new NotFoundException('Fetal record not found');
+    }
 
-    return fetalRecord.checkupRecords;
+    return fetalRecord.appointments;
   }
 
   async getAppointmentWithHistory(appointmentId: string) {
     const appointment = await this.appointmentRepo.findOne({
       where: { id: appointmentId },
-      relations: ['fetalRecord', 'fetalRecord.checkupRecords', 'doctor'],
+      relations: [
+        'fetalRecord',
+        'fetalRecord.checkupRecords',
+        'doctor',
+        'appointmentServices',
+        'medicationBills',
+      ],
     });
 
-    if (!appointment) throw new NotFoundException('Appointment not found');
+    if (!appointment) {
+      throw new NotFoundException('Appointment not found');
+    }
+
+    // Kiểm tra nếu không có fetalRecord
+    if (!appointment.fetalRecord) {
+      throw new NotFoundException(
+        'Fetal record not found for this appointment',
+      );
+    }
 
     return {
       ...appointment,
-      history: appointment.fetalRecord.checkupRecords,
+      history: appointment.fetalRecord.checkupRecords || [], // Nếu không có checkupRecords, trả về mảng rỗng
     };
   }
+
+
+  async getAppointmentsByDoctor(doctorId: string) {
+    const appointments = await this.appointmentRepo.find({
+      where: { doctor: { id: doctorId } }, // Lọc theo bác sĩ
+      relations: [
+        'fetalRecord',
+        'fetalRecord.checkupRecords', // Lấy toàn bộ lịch sử khám của thai kỳ
+        'doctor',
+        'appointmentServices',
+        'medicationBills',
+      ],
+    });
+  
+    if (!appointments.length) throw new NotFoundException('No appointments found for this doctor');
+  
+    return appointments.map(appointment => ({
+      ...appointment,
+      fullHistory: appointment.fetalRecord.checkupRecords, // Trả về toàn bộ lịch sử khám của thai kỳ
+    }));
+  }
+  
 }
