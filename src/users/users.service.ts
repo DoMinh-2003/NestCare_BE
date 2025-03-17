@@ -110,12 +110,18 @@ export class UsersService {
   }
 
 
-  async searchUsers(pageNum: number, pageSize: number, query?: string) {
+  async searchUsers(pageNum: number, pageSize: number, query?: string, role?: Role) {
     const qb = this.userRepository.createQueryBuilder('user')
       .where('user.isDeleted = :isDeleted', { isDeleted: false });
   
-      if (query && query.trim() !== '') {
-        qb.andWhere(
+    // Nếu có role thì lọc theo role
+    if (role) {
+      qb.andWhere('user.role = :role', { role });
+    }
+  
+    // Nếu có query thì tìm theo tên, email, hoặc số điện thoại
+    if (query && query.trim() !== '') {
+      qb.andWhere(
         `(LOWER(user.fullName) LIKE LOWER(:queryFullName) 
         OR LOWER(user.email) LIKE LOWER(:queryEmail) 
         OR user.phone LIKE :queryPhone)`,
@@ -128,7 +134,6 @@ export class UsersService {
     }
   
     qb.skip((pageNum - 1) * pageSize).take(pageSize);
-
   
     const [users, total] = await qb.getManyAndCount();
   
@@ -140,6 +145,7 @@ export class UsersService {
       totalPages: Math.ceil(total / pageSize),
     };
   }
+  
   
   
   

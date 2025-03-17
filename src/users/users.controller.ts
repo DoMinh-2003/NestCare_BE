@@ -75,17 +75,17 @@ export class UsersController {
   ): Promise<void> {
     return this.usersService.toggleDeleteStatus(id, toggleDeleteDto.isDeleted);
   }
-
   @Get('search/:pageNum/:pageSize')
   @ApiParam({ name: 'pageNum', description: 'Số trang', example: 1 })
   @ApiParam({ name: 'pageSize', description: 'Số lượng bản ghi trên mỗi trang', example: 10 })
   @ApiQuery({ name: 'query', description: 'Từ khóa tìm kiếm (tùy chọn)', required: false, example: 'name or phone or email' })
+  @ApiQuery({ name: 'role', description: 'Vai trò người dùng (tùy chọn)', required: false, example: 'doctor' })
   async searchUsers(
     @Param('pageNum') pageNum: string,
     @Param('pageSize') pageSize: string,
     @Query('query') query?: string,
+    @Query('role') role?: Role, // Thêm role vào Query
   ) {
-    console.log(query);
-    return this.usersService.searchUsers(Number(pageNum), Number(pageSize), query || '');
+    return this.usersService.searchUsers(Number(pageNum), Number(pageSize), query, role);
   }
 }
