@@ -8,7 +8,8 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { CheckupRecord } from './checkupRecord.entity';
-import {AppointmentServiceEntity } from './appointmentService.entity';
+import { AppointmentServiceEntity } from './appointmentService.entity';
+import { MedicationBill } from './medicationBill.entity';
 
 export enum AppointmentStatus {
   PENDING = 'PENDING', // Đang chờ xác nhận
@@ -48,6 +49,11 @@ export class Appointment {
     (appointmentService) => appointmentService.appointment,
   )
   appointmentServices: AppointmentServiceEntity[];
+
+  @OneToMany(() => MedicationBill, (bill) => bill.appointment, {
+    cascade: true,
+  })
+  medicationBills: MedicationBill[];
 
   @Column({ type: 'boolean', default: false })
   isFollow: boolean;

@@ -90,7 +90,7 @@ export class AppointmentController {
     @Param('id') appointmentId: string,
     @Body() checkupData: CreateCheckupDto,
   ) {
-    return this.appointmentService.completeCheckup(appointmentId, checkupData);
+    return this.appointmentService.completeCheckup(appointmentId, checkupData, checkupData.medications);
   }
 
   @Get(':fetalRecordId/history')
