@@ -11,11 +11,12 @@ import { AppointmentService } from './appointment.service';
 import { UserPackages } from 'src/userPackages/entities/userPackages.entity';
 import { PackageService } from 'src/packages/entity/packageService.entity';
 import { VnpayService } from 'src/common/service/vnpay.service';
+import { MailService } from 'src/common/service/mail.service';
 
 
 @Module({
   imports: [TypeOrmModule.forFeature([Appointment, FetalRecord, User, CheckupRecord, AppointmentServiceEntity, UserPackages, PackageService, Services])],
   controllers: [AppointmentController],
-  providers: [AppointmentService,VnpayService],
+  providers: [AppointmentService,VnpayService,MailService],
 })
 export class AppointmentModule {}

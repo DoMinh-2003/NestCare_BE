@@ -17,6 +17,9 @@ import { PackagesModule } from './packages/packages.module';
 import { FetalRecordsModule } from './fetal-records/fetal-records.module';
 import { UserPackagesModule } from './userPackages/userPackages.module';
 import { AppointmentModule } from './appointment/appointment.module';
+import { MailerModule } from '@nestjs-modules/mailer';
+import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
+import { join } from 'path';
 
 @Module({
   imports: [
@@ -46,6 +49,28 @@ import { AppointmentModule } from './appointment/appointment.module';
       }),
       inject: [ConfigService],
     }),
+
+
+    MailerModule.forRoot({
+      transport: {
+        host: 'smtp.gmail.com', // SMTP server
+        port: 587,
+        secure: false, // true cho cổng 465, false cho 587
+        auth: {
+          user: 'minhlola28@gmail.com', // Thay bằng email của bạn
+          pass: 'nusfpougsykpemtb', // Mật khẩu ứng dụng (App Password)
+        },
+      },
+      defaults: {
+        from: 'minhlola28@gmail.com', // Email gửi đi
+      },
+      template: {
+        dir: join(__dirname, 'templates'), // Thư mục chứa template email
+        adapter: new HandlebarsAdapter(), // Sử dụng Handlebars
+        options: { strict: true },
+      },
+    }),
+
     PackagesModule,
     FetalRecordsModule,
     UserPackagesModule,

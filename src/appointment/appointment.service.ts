@@ -11,6 +11,7 @@ import { Services } from 'src/services/services.entity';
 import { UserPackages, UserPackageStatus } from 'src/userPackages/entities/userPackages.entity';
 import { PackageService } from 'src/packages/entity/packageService.entity';
 import { VnpayService } from 'src/common/service/vnpay.service';
+import { MailService } from 'src/common/service/mail.service';
 
 
 @Injectable()
@@ -43,6 +44,7 @@ export class AppointmentService {
 
      private vnpayService: VnpayService,
 
+     private mailService: MailService,
     
     
   ) {}
@@ -60,6 +62,8 @@ export class AppointmentService {
       appointmentDate: date,
       status: AppointmentStatus.PENDING,
     });
+
+    this.mailService.sendWelcomeEmail(doctor.email, "Xác Nhận Lịch Khác Ngày " + date, "Bạn hãy vô xác nhận lịch khám của mẹ bầu vào ngày " + date);
 
     return await this.appointmentRepo.save(appointment);
   }
