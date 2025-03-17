@@ -49,8 +49,10 @@ export class UserPackagesService {
       isActive: true,
     });
     const newUserPackage  = await this.userPackagesRepository.save(userPackage)
+    const param = `?order=${newUserPackage.id}`
+    const amount = userPackage.package.price * 100;
     
-    return await this.vnpayService.createPayment(newUserPackage);;
+    return await this.vnpayService.createPayment(newUserPackage.id,param,amount);
   }
 
   // Lấy các gói dịch vụ của mẹ bầu
