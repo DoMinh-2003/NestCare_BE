@@ -17,12 +17,14 @@ export class Medication {
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   price: number;
 
+  image: string;
+
   @Column({ type: 'tinyint', width: 1, default: 0 })
-      isDeleted: number;
+  isDeleted: number;
     
-      @CreateDateColumn()
-      createdAt: Date;
+  @CreateDateColumn()
+  createdAt: Date;
     
-      @UpdateDateColumn()
-      updatedAt: Date;
+  @UpdateDateColumn()
+  updatedAt: Date;
 }
