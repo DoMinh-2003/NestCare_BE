@@ -1,3 +1,4 @@
+import { AppointmentServiceEntity } from 'src/appointment/entities/appointmentService.entity';
 import { PackageService } from 'src/packages/entity/packageService.entity';
 import {
   Entity,
@@ -22,7 +23,7 @@ export class Services {
   @Column()
   description: string;
 
-  @Column({default: false })
+  @Column({ default: false })
   isDeleted: boolean;
 
   @CreateDateColumn()
@@ -33,7 +34,10 @@ export class Services {
 
   @OneToMany(() => PackageService, (packageService) => packageService.service)
   packageServices: PackageService[];
+
+  @OneToMany(
+    () => AppointmentServiceEntity,
+    (appointmentService) => appointmentService.service,
+  )
+  appointmentServices: AppointmentServiceEntity[];
 }
-
-
-

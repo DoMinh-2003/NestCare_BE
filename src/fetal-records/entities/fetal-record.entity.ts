@@ -9,7 +9,8 @@ import {
   UpdateDateColumn,
   OneToMany,
 } from 'typeorm';
-import { UserPackages } from '../../userPackages/entities/userPackages.entity';
+import { Appointment } from 'src/appointment/entities/appointment.entity';
+import { CheckupRecord } from 'src/appointment/entities/checkupRecord.entity';
 
 export enum PregnancyStatus {
   PREGNANT = 'PREGNANT', // Đang mang thai
@@ -28,10 +29,10 @@ export class FetalRecord {
   @Column()
   name: string;
 
-  @Column('date',{ nullable: true })
+  @Column('date', { nullable: true })
   dateOfPregnancyStart: string; // Ngày bắt đầu mang thai
 
-  @Column('date',{ nullable: true })
+  @Column('date', { nullable: true })
   expectedDeliveryDate: string; // Ngày dự kiến sinh
 
   @Column('date', { nullable: true })
@@ -44,9 +45,14 @@ export class FetalRecord {
   @JoinColumn({ name: 'user_id' })
   mother: User; // Mối quan hệ đến User (mẹ bầu)
 
-//   @OneToMany(() => UserPackages, (userPackages) => userPackages.fetalRecord)
-//   userPackages: UserPackages[];  // Mối quan hệ với bảng UserPackages
+  //   @OneToMany(() => UserPackages, (userPackages) => userPackages.fetalRecord)
+  //   userPackages: UserPackages[];  // Mối quan hệ với bảng UserPackages
 
+  @OneToMany(() => Appointment, (appointment) => appointment.fetalRecord)
+  appointments: Appointment[];
+
+  @OneToMany(() => CheckupRecord, (checkupRecord) => checkupRecord.fetalRecord)
+  checkupRecords: CheckupRecord[];
 
   @Column({
     type: 'enum',

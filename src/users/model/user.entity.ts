@@ -4,6 +4,7 @@ import { Role } from 'src/common/enums/role.enum';
 import { v4 as uuidv4 } from 'uuid';
 import { FetalRecord } from 'src/fetal-records/entities/fetal-record.entity';
 import { UserPackages } from 'src/userPackages/entities/userPackages.entity';
+import { Appointment } from 'src/appointment/entities/appointment.entity';
 
 @Entity()
 export class User {
@@ -45,6 +46,9 @@ export class User {
 
   @OneToMany(() => UserPackages, (userPackages) => userPackages.user)
   userPackages: UserPackages[];  // Mối quan hệ với bảng UserPackages (mua gói)
+
+  @OneToMany(() => Appointment, (appointment) => appointment.doctor)
+  appointments: Appointment[]; // Mối quan hệ với bảng FetalRecord
 
   @BeforeInsert()
   async initializeUserBeforeInsert() {
