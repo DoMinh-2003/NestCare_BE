@@ -6,6 +6,7 @@ import * as bcrypt from 'bcrypt';
 import { Role } from 'src/common/enums/role.enum';
 import { RegisterUserDto } from './dto/RegisterUserDto';
 import { UpdateUserDTO } from './dto/UpdateUserDTO';
+import { SearchWithPaginationDto } from './dto/searchWithPagination.dto';
 
 @Injectable()
 export class UsersService {
@@ -107,4 +108,39 @@ export class UsersService {
     const savedUser = this.userRepository.save(newUser);
     return savedUser instanceof Array ? savedUser[0] : savedUser;
   }
+
+
+  async searchUsers(pageNum: number, pageSize: number, query?: string) {
+    const qb = this.userRepository.createQueryBuilder('user')
+      .where('user.isDeleted = :isDeleted', { isDeleted: false });
+  
+      if (query && query.trim() !== '') {
+        qb.andWhere(
+        `(LOWER(user.fullName) LIKE LOWER(:queryFullName) 
+        OR LOWER(user.email) LIKE LOWER(:queryEmail) 
+        OR user.phone LIKE :queryPhone)`,
+        {
+          queryFullName: `%${query}%`,
+          queryEmail: `%${query}%`,
+          queryPhone: `%${query}%`,
+        }
+      );
+    }
+  
+    qb.skip((pageNum - 1) * pageSize).take(pageSize);
+
+  
+    const [users, total] = await qb.getManyAndCount();
+  
+    return {
+      users,
+      total,
+      pageNum,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize),
+    };
+  }
+  
+  
+  
 }
