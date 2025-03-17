@@ -6,12 +6,14 @@ import {
   Param,
   Post,
   Put,
+  Query,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import {
   ApiBearerAuth,
   ApiBody,
   ApiParam,
+  ApiQuery,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
@@ -21,6 +23,7 @@ import { RegisterUserDto } from './dto/RegisterUserDto';
 import { User } from './model/user.entity';
 import { ToggleDeleteDto } from '../common/models/ToggleDeleteDto';
 import { UpdateUserDTO } from './dto/UpdateUserDTO';
+import { SearchWithPaginationDto } from './dto/searchWithPagination.dto';
 @ApiBearerAuth()
 @ApiTags('Users')
 @Controller('api/users')
@@ -60,19 +63,29 @@ export class UsersController {
     return this.usersService.update(id, updateUserDto);
   }
 
-
   @Put(':id/toggle-delete')
   @ApiBody({
     description: 'Toggle isDeleted status for the service',
     type: ToggleDeleteDto,
   })
-
-
   @ApiResponse({ status: 200, description: 'User status toggled successfully' })
   async toggleDeleteStatus(
     @Param('id') id: string,
     @Body() toggleDeleteDto: ToggleDeleteDto,
   ): Promise<void> {
     return this.usersService.toggleDeleteStatus(id, toggleDeleteDto.isDeleted);
+  }
+
+  @Get('search/:pageNum/:pageSize')
+  @ApiParam({ name: 'pageNum', description: 'Số trang', example: 1 })
+  @ApiParam({ name: 'pageSize', description: 'Số lượng bản ghi trên mỗi trang', example: 10 })
+  @ApiQuery({ name: 'query', description: 'Từ khóa tìm kiếm (tùy chọn)', required: false, example: 'name or phone or email' })
+  async searchUsers(
+    @Param('pageNum') pageNum: string,
+    @Param('pageSize') pageSize: string,
+    @Query('query') query?: string,
+  ) {
+    console.log(query);
+    return this.usersService.searchUsers(Number(pageNum), Number(pageSize), query || '');
   }
 }
