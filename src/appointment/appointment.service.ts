@@ -12,6 +12,9 @@ import { UserPackages, UserPackageStatus } from 'src/userPackages/entities/userP
 import { PackageService } from 'src/packages/entity/packageService.entity';
 import { VnpayService } from 'src/common/service/vnpay.service';
 import { MailService } from 'src/common/service/mail.service';
+import { MedicationBill } from './entities/medicationBill.entity';
+import { Medication } from 'src/medication/medication.entity';
+import { MedicationBillDetail } from './entities/medicationBillDetail.entity';
 
 
 @Injectable()
@@ -41,11 +44,18 @@ export class AppointmentService {
     @InjectRepository(PackageService)
     private readonly packageServiceRepo: Repository<PackageService>,
 
+    @InjectRepository(MedicationBill)
+    private readonly medicationBillRepo: Repository<MedicationBill>,
+
+    @InjectRepository(Medication)
+    private readonly medicationRepo: Repository<Medication>,
+
+    @InjectRepository(MedicationBillDetail)
+    private readonly medicationBillDetailRepo: Repository<MedicationBillDetail>,
 
      private vnpayService: VnpayService,
 
      private mailService: MailService,
-    
     
   ) {}
 
@@ -210,7 +220,7 @@ async updateAppointmentStatus(
   
 
 
-async completeCheckup(appointmentId: string, checkupData: CreateCheckupDto) {
+  async completeCheckup(appointmentId: string, checkupData: CreateCheckupDto, medications: { medicationId: string; quantity: number }[]) {
     const appointment = await this.appointmentRepo.findOne({
       where: { id: appointmentId },
       relations: ['fetalRecord', 'doctor'],
@@ -219,17 +229,44 @@ async completeCheckup(appointmentId: string, checkupData: CreateCheckupDto) {
     if (!appointment) throw new NotFoundException('Appointment not found');
     if (!checkupData) throw new BadRequestException('Checkup data is required');
   
+    // Lưu kết quả khám
     const checkupRecord = this.checkupRecordRepo.create({
       fetalRecord: appointment.fetalRecord,
       appointment,
       ...checkupData,
     });
-  
     await this.checkupRecordRepo.save(checkupRecord);
   
+    // Tạo hóa đơn thuốc
+    let totalPrice = 0;
+    const medicationBill = this.medicationBillRepo.create({ appointment, details: [] });
+  
+    for (const med of medications) {
+      const medication = await this.medicationRepo.findOne({ where: { id: med.medicationId } });
+      if (!medication) throw new NotFoundException(`Medication ${med.medicationId} not found`);
+  
+      const total = medication.price * med.quantity;
+      totalPrice += total;
+  
+      const detail = this.medicationBillDetailRepo.create({
+        bill: medicationBill,
+        medication,
+        quantity: med.quantity,
+        price: medication.price,
+        total,
+      });
+  
+      medicationBill.details.push(detail);
+    }
+  
+    medicationBill.totalPrice = totalPrice;
+    await this.medicationBillRepo.save(medicationBill);
+  
+    // Cập nhật trạng thái cuộc hẹn
     appointment.status = AppointmentStatus.COMPLETED;
     return await this.appointmentRepo.save(appointment);
   }
+  
 
   
 
