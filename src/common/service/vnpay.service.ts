@@ -23,19 +23,22 @@ export class VnpayService {
   }
 
   async createPayment(
-    userPackage: UserPackages,
+    // userPackage: UserPackages,
+    id: any,
+    param: any,
+    amount: any
   ): Promise<string> {
-    if (!userPackage) {
-      throw new Error('userPackage not found');
-    }
+    // if (!userPackage) {
+    //   throw new Error('userPackage not found');
+    // }
 
-    const orderId = userPackage.id;
+    // const orderId = userPackage.id;
     const createDate = new Date()
       .toISOString()
       .replace(/[^0-9]/g, '')
       .slice(0, 14);
 
-     const amount =  userPackage.package.price * 100;
+    //  const amount =  userPackage.package.price * 100;
 
     // Thông tin gửi đến VNPAY
     const vnpParams = {
@@ -44,11 +47,11 @@ export class VnpayService {
       vnp_TmnCode: this.vnpTmnCode,
       vnp_Locale: 'vn',
       vnp_CurrCode: 'VND',
-      vnp_TxnRef: orderId,
-      vnp_OrderInfo: `Thanh toan cho ma GD: ${userPackage.package.name}`,
+      vnp_TxnRef: id,
+      vnp_OrderInfo: `Thanh toan cho ma GD: ${id}`,
       vnp_OrderType: 'other',
       vnp_Amount: amount.toString(),
-      vnp_ReturnUrl: `${this.vnpReturnUrl}?orderId=${orderId}`,
+      vnp_ReturnUrl: `${this.vnpReturnUrl}${param}`,
       vnp_IpAddr: "14.225.217.181",
       vnp_CreateDate: createDate,
     };
