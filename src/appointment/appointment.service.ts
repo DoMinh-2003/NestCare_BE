@@ -10,6 +10,7 @@ import { AppointmentServiceEntity } from './entities/appointmentService.entity';
 import { Services } from 'src/services/services.entity';
 import { UserPackages, UserPackageStatus } from 'src/userPackages/entities/userPackages.entity';
 import { PackageService } from 'src/packages/entity/packageService.entity';
+import { VnpayService } from 'src/common/service/vnpay.service';
 
 
 @Injectable()
@@ -38,6 +39,9 @@ export class AppointmentService {
 
     @InjectRepository(PackageService)
     private readonly packageServiceRepo: Repository<PackageService>,
+
+
+     private vnpayService: VnpayService,
 
     
     
@@ -132,7 +136,7 @@ async updateAppointmentStatus(
   
 
 
-async startCheckup(appointmentId: string, servicesUsed: ServiceUsedDto[]) {
+  async startCheckup(appointmentId: string, servicesUsed: ServiceUsedDto[]) {
     const appointment = await this.appointmentRepo.findOne({
       where: { id: appointmentId },
       relations: ['fetalRecord', 'doctor', 'fetalRecord.user'],
@@ -153,14 +157,23 @@ async startCheckup(appointmentId: string, servicesUsed: ServiceUsedDto[]) {
         if (!service) throw new NotFoundException(`Service ${serviceUsed.serviceId} not found`);
   
         let price = service.price;
+        let isInPackage = false; // Đánh dấu nếu dịch vụ có trong gói
+  
         if (userPackage) {
           const packageService = userPackage.package.packageServices.find(ps => ps.service.id === service.id);
-          if (packageService && packageService.slot > 0) {
-            packageService.slot--; // Trừ lượt sử dụng
-            await this.packageServiceRepo.save(packageService);
-            price = 0; // Miễn phí nếu có trong gói
+          
+          if (packageService) {
+            if (packageService.slot > 0) {
+              packageService.slot--; // Trừ lượt sử dụng
+              await this.packageServiceRepo.save(packageService);
+              price = 0; // Miễn phí nếu còn slot
+              isInPackage = true;
+            }
           }
-        } else {
+        }
+  
+        // Nếu không có trong gói hoặc slot = 0, tính vào totalCost
+        if (!isInPackage) {
           totalCost += service.price;
         }
   
@@ -168,20 +181,28 @@ async startCheckup(appointmentId: string, servicesUsed: ServiceUsedDto[]) {
           appointment,
           service,
           price,
+          isInPackage, // Cập nhật field mới
           notes: serviceUsed.notes || '',
         });
       }),
     );
   
     await this.appointmentServiceRepo.save(appointmentServices);
+    appointment.status = AppointmentStatus.IN_PROGRESS;
+
+    const newAppointment = await this.appointmentRepo.save(appointment);
   
-    if (!userPackage && totalCost > 0) {
-      return { message: 'Please make a payment', totalCost };
+    if (totalCost > 0) {
+    //   return { message: 'Please make a payment', totalCost };
+      const param = `?appointmentId=${newAppointment.id}`
+
+      return await this.vnpayService.createPayment(newAppointment.id,param,totalCost);;
     }
   
-    appointment.status = AppointmentStatus.IN_PROGRESS;
-    return await this.appointmentRepo.save(appointment);
+    
+    return newAppointment;
   }
+  
   
 
 
