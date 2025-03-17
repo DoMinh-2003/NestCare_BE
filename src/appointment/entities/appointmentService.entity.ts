@@ -4,6 +4,7 @@ import { Services } from 'src/services/services.entity';
 
 @Entity()
 export class AppointmentServiceEntity {
+
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -16,6 +17,10 @@ export class AppointmentServiceEntity {
   @Column('decimal', { precision: 10, scale: 2 })
   price: number; // Giá dịch vụ tại thời điểm khám
 
+  isInPackage: boolean;
+
   @Column({ nullable: true })
   notes?: string; // Ghi chú nếu cần
+
+
 }
