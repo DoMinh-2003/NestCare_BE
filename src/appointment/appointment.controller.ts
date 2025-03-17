@@ -28,24 +28,24 @@ export class AppointmentController {
     );
   }
 
-//   @ApiBody({ type: CreateCheckupDto })
-//   @ApiParam({
-//     name: 'status',
-//     description: 'Trạng thái của Appointments',
-//     enum: AppointmentStatus, // Đây là enum bạn muốn sử dụng
-//   })
-//   @Post(':appointmentId/:status')
-//   async updateAppointmentStatus(
-//     @Param('appointmentId') appointmentId: string,
-//     @Param('status') status: AppointmentStatus,
-//     @Body('checkupData') checkupData?: CreateCheckupDto,
-//   ) {
-//     return this.appointmentService.updateAppointmentStatus(
-//       appointmentId,
-//       status,
-//       checkupData,
-//     );
-//   }
+  //   @ApiBody({ type: CreateCheckupDto })
+  //   @ApiParam({
+  //     name: 'status',
+  //     description: 'Trạng thái của Appointments',
+  //     enum: AppointmentStatus, // Đây là enum bạn muốn sử dụng
+  //   })
+  //   @Post(':appointmentId/:status')
+  //   async updateAppointmentStatus(
+  //     @Param('appointmentId') appointmentId: string,
+  //     @Param('status') status: AppointmentStatus,
+  //     @Body('checkupData') checkupData?: CreateCheckupDto,
+  //   ) {
+  //     return this.appointmentService.updateAppointmentStatus(
+  //       appointmentId,
+  //       status,
+  //       checkupData,
+  //     );
+  //   }
 
   // 1️⃣ API cập nhật trạng thái (ngoại trừ IN_PROGRESS & COMPLETED)
   @Put(':id/:status')
@@ -90,12 +90,16 @@ export class AppointmentController {
     @Param('id') appointmentId: string,
     @Body() checkupData: CreateCheckupDto,
   ) {
-    return this.appointmentService.completeCheckup(appointmentId, checkupData, checkupData.medications);
+    return this.appointmentService.completeCheckup(
+      appointmentId,
+      checkupData,
+      checkupData.medications,
+    );
   }
 
   @Get(':fetalRecordId/history')
   async getFetalRecordHistory(@Param('fetalRecordId') fetalRecordId: string) {
-    return this.appointmentService.getFetalRecordHistory(fetalRecordId);
+    return this.appointmentService.getAppointmentsByFetalRecord(fetalRecordId);
   }
 
   @Get(':appointmentId')
@@ -103,5 +107,15 @@ export class AppointmentController {
     @Param('appointmentId') appointmentId: string,
   ) {
     return this.appointmentService.getAppointmentWithHistory(appointmentId);
+  }
+
+  @Get('by-doctor/:doctorId')
+  @ApiParam({
+    name: 'doctorId',
+    description: 'ID bác sĩ',
+    example: 'doctor-123',
+  })
+  async getAppointmentsByDoctor(@Param('doctorId') doctorId: string) {
+    return this.appointmentService.getAppointmentsByDoctor(doctorId);
   }
 }
