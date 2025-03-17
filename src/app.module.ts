@@ -16,6 +16,7 @@ import { ServicesModule } from './services/services.module';
 import { PackagesModule } from './packages/packages.module';
 import { FetalRecordsModule } from './fetal-records/fetal-records.module';
 import { UserPackagesModule } from './userPackages/userPackages.module';
+import { AppointmentModule } from './appointment/appointment.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { UserPackagesModule } from './userPackages/userPackages.module';
     // BlogsModule,
     // CategoryModule,
     ServicesModule,
+    AppointmentModule,
 
 
     ConfigModule.forRoot({
