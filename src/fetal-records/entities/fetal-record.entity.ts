@@ -29,6 +29,9 @@ export class FetalRecord {
   @Column()
   name: string;
 
+  @Column()
+  note: string
+
   @Column('date', { nullable: true })
   dateOfPregnancyStart: string; // Ngày bắt đầu mang thai
 
