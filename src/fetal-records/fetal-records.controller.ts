@@ -17,7 +17,7 @@ export class FetalRecordsController {
     return await this.fetalRecordsService.create(createFetalRecordDto);
   }
 
-  @Get(':userId')
+  @Get('/user/:userId')
   async findAll(@Param('userId') userId: string) {
     return await this.fetalRecordsService.findAllByUserId(userId);
   }
