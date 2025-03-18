@@ -20,6 +20,14 @@ export class CreateFetalRecordDto {
   name: string;
 
   @ApiProperty({
+    description: '1 baby or 2 baby',
+    example: '1 baby or 2 baby',
+  })
+  @IsNotEmpty()
+  @IsString()
+  note: string;
+
+  @ApiProperty({
     description: 'Ngày bắt đầu mang thai của mẹ bầu',
     example: '2025-03-01',
   })
