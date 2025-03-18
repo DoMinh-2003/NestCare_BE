@@ -5,6 +5,8 @@ import { Repository } from 'typeorm';
 import { FetalRecord } from './entities/fetal-record.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/users/model/user.entity';
+import { CheckupRecord } from 'src/appointment/entities/checkupRecord.entity';
+import { CreateCheckupRecordDto } from './dto/create-checkup-record.dto';
 
 @Injectable()
 export class FetalRecordsService {
@@ -14,6 +16,10 @@ export class FetalRecordsService {
 
       @InjectRepository(User)
         private readonly userRepository: Repository<User>,
+
+        @InjectRepository(CheckupRecord)
+        private readonly checkupRecordRepo: Repository<CheckupRecord>,
+        
   ) {}
 
   // Thêm hồ sơ thai nhi
@@ -54,6 +60,21 @@ export class FetalRecordsService {
     }
 
     return fetalRecord;
+  }
+
+
+  async createCheckupRecord(fetalId: string, dto: CreateCheckupRecordDto) {
+    const fetalRecord = await this.fetalRecordRepository.findOne({ where: { id: fetalId } });
+    if (!fetalRecord) {
+      throw new NotFoundException('Fetal record not found');
+    }
+
+    const checkupRecord = this.checkupRecordRepo.create({
+      ...dto,
+      fetalRecord,
+    });
+
+    return this.checkupRecordRepo.save(checkupRecord);
   }
 
   async update(

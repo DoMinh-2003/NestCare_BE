@@ -4,10 +4,10 @@ import { FetalRecordsController } from './fetal-records.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { FetalRecord } from './entities/fetal-record.entity';
 import { User } from 'src/users/model/user.entity';
-import { Appointment } from 'src/appointment/entities/appointment.entity';
+import { CheckupRecord } from 'src/appointment/entities/checkupRecord.entity';
 
 @Module({
-   imports: [TypeOrmModule.forFeature([FetalRecord,User])],
+   imports: [TypeOrmModule.forFeature([FetalRecord,User,CheckupRecord])],
   controllers: [FetalRecordsController],
   providers: [FetalRecordsService],
 })
