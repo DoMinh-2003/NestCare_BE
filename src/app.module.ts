@@ -8,8 +8,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { RolesGuard } from './auth/guard/roles.guard';
 import { AuthGuard } from './auth/guard/auth.guard';
-// import { BlogsModule } from './blog/blog.module';
-// import { CategoryModule } from './category/category.module';
+import { BlogsModule } from './blog/blog.module';
+import { CategoryModule } from './category/category.module';
 import { MedicationModule } from './medication/medication.module';
 import { ServicesModule } from './services/services.module';
 import { PackagesModule } from './packages/packages.module';
@@ -25,8 +25,8 @@ import { join } from 'path';
     AuthModule,
     UsersModule,
     MedicationModule,
-    // BlogsModule,
-    // CategoryModule,
+    BlogsModule,
+    CategoryModule,
     ServicesModule,
     AppointmentModule,
 

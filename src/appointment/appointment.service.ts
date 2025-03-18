@@ -160,20 +160,23 @@ export class AppointmentService {
     return await this.appointmentRepo.save(appointment);
   }
 
+  
   async startCheckup(appointmentId: string, servicesUsed: ServiceUsedDto[]) {
     const appointment = await this.appointmentRepo.findOne({
       where: { id: appointmentId },
-      relations: ['fetalRecord', 'doctor', 'fetalRecord.user'],
+      relations: ['fetalRecord', 'doctor', 'fetalRecord.mother'],
     });
-
+  
     if (!appointment) throw new NotFoundException('Appointment not found');
-
+  
     const user = appointment.fetalRecord.mother;
-    const userPackage = await this.userPackageRepo.findOne({
+  
+    // Lấy tất cả các gói của user (PAID và đang active)
+    const userPackages = await this.userPackageRepo.find({
       where: { user, status: UserPackageStatus.PAID, isActive: true },
       relations: ['package', 'package.packageServices'],
     });
-
+  
     let totalCost = 0;
     const appointmentServices = await Promise.all(
       servicesUsed.map(async (serviceUsed) => {
@@ -184,58 +187,57 @@ export class AppointmentService {
           throw new NotFoundException(
             `Service ${serviceUsed.serviceId} not found`,
           );
-
+  
         let price = service.price;
-        let isInPackage = false; // Đánh dấu nếu dịch vụ có trong gói
-
-        if (userPackage) {
+        let isInPackage = false;
+  
+        // Duyệt qua tất cả các gói xem có gói nào chứa dịch vụ này không
+        for (const userPackage of userPackages) {
           const packageService = userPackage.package.packageServices.find(
             (ps) => ps.service.id === service.id,
           );
-
-          if (packageService) {
-            if (packageService.slot > 0) {
-              packageService.slot--; // Trừ lượt sử dụng
-              await this.packageServiceRepo.save(packageService);
-              price = 0; // Miễn phí nếu còn slot
-              isInPackage = true;
-            }
+  
+          if (packageService && packageService.slot > 0) {
+            packageService.slot--; // Trừ lượt sử dụng
+            await this.packageServiceRepo.save(packageService);
+            price = 0; // Miễn phí nếu còn slot
+            isInPackage = true;
+            break; // Dừng lại ngay khi tìm thấy gói có slot còn lại
           }
         }
-
-        // Nếu không có trong gói hoặc slot = 0, tính vào totalCost
+  
+        // Nếu không có trong gói nào hoặc hết slot -> tính tiền
         if (!isInPackage) {
           totalCost += service.price;
         }
-
+  
         return this.appointmentServiceRepo.create({
           appointment,
           service,
           price,
-          isInPackage, // Cập nhật field mới
+          isInPackage, // Cập nhật trạng thái có trong gói hay không
           notes: serviceUsed.notes || '',
         });
       }),
     );
-
+  
     await this.appointmentServiceRepo.save(appointmentServices);
     appointment.status = AppointmentStatus.IN_PROGRESS;
-
+  
     const newAppointment = await this.appointmentRepo.save(appointment);
-
+  
     if (totalCost > 0) {
-      //   return { message: 'Please make a payment', totalCost };
       const param = `?appointmentId=${newAppointment.id}`;
-
       return await this.vnpayService.createPayment(
         newAppointment.id,
         param,
         totalCost,
       );
     }
-
+  
     return newAppointment;
   }
+  
 
   async completeCheckup(
     appointmentId: string,
