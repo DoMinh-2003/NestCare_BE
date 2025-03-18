@@ -38,17 +38,19 @@ export class FetalRecordsService {
   async findAllByUserId(userId: string): Promise<FetalRecord[]> {
     return await this.fetalRecordRepository.find({
       where: { mother: { id: userId }, isDeleted: 0 }, // Kiểm tra isDeleted = 0 để chỉ lấy các hồ sơ chưa bị xóa
+      relations: ['checkupRecords','appointments']
     });
   }
 
   // Tìm hồ sơ thai nhi theo ID
-  async findById(id: string) {
+  async findById(idFetal: string) {
     const fetalRecord = await this.fetalRecordRepository.findOne({
-      where: { id: id }, // Chỉ định điều kiện tìm theo id
+      where: { id: idFetal, isDeleted: 0 }, // Chỉ định điều kiện tìm theo id
+      relations: ['checkupRecords','appointments']
     });
 
     if (!fetalRecord) {
-      throw new NotFoundException(`FetalRecord with ID ${id} not found`);
+      throw new NotFoundException(`FetalRecord with ID ${idFetal} not found`);
     }
 
     return fetalRecord;
