@@ -4,6 +4,7 @@ import { CreateFetalRecordDto } from './dto/create-fetal-record.dto';
 import { UpdateFetalRecordDto } from './dto/update-fetal-record.dto';
 import { ApiBearerAuth, ApiBody, ApiTags } from '@nestjs/swagger';
 import { Api } from 'src/common/api';
+import { CreateCheckupRecordDto } from './dto/create-checkup-record.dto';
 
 @ApiTags("FetalRecords")
 @Controller(Api.fetalRecord)
@@ -20,6 +21,16 @@ export class FetalRecordsController {
   @Get('/user/:userId')
   async findAll(@Param('userId') userId: string) {
     return await this.fetalRecordsService.findAllByUserId(userId);
+  }
+
+
+  @Post('checkup-records/:fetalId')
+  @ApiBody({ type: CreateCheckupRecordDto })
+  async addCheckupRecord(
+    @Param('fetalId') fetalId: string,
+    @Body() createCheckupRecordDto: CreateCheckupRecordDto,
+  ) {
+    return this.fetalRecordsService.createCheckupRecord(fetalId, createCheckupRecordDto);
   }
 
 
