@@ -23,19 +23,26 @@ export class UsersService {
   // Hàm đăng ký người dùng
   async registerUser(registerUserDto: RegisterUserDto): Promise<User> {
     const { username, email, password, fullName, phone, role, image } = registerUserDto;
-    const user = new User();
-    user.username = username;
-    user.email = email;
-    user.password = password;
-    user.fullName = fullName;
-    user.phone = phone;
-    user.role = role;
-    user.image = image;
+    // const user = new User();
+    // user.username = username;
+    // user.email = email;
+    // user.password = password;
+    // user.fullName = fullName;
+    // user.phone = phone;
+    // user.role = role;
+    // user.image = image;
 
-    // Tạo ID và mã hóa mật khẩu
-    await user.initializeUserBeforeInsert();
-
-    return this.userRepository.save(user);
+    const newUser = this.userRepository.create({
+      username : username,
+     email : email,
+      password : password,
+      fullName : fullName,
+      phone : phone,
+      role : role,
+      image : image
+    });
+    const savedUser = this.userRepository.save(newUser);
+    return savedUser instanceof Array ? savedUser[0] : savedUser;
   }
 
   async findUsersByRole(role: Role): Promise<User[]> {

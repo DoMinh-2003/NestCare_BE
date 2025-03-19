@@ -44,7 +44,7 @@ export class FetalRecordsService {
   async findAllByUserId(userId: string): Promise<FetalRecord[]> {
     return await this.fetalRecordRepository.find({
       where: { mother: { id: userId }, isDeleted: 0 }, // Kiểm tra isDeleted = 0 để chỉ lấy các hồ sơ chưa bị xóa
-      relations: ['checkupRecords','appointments']
+      relations: ['checkupRecords','checkupRecords.appointment','appointments', 'mother']
     });
   }
 
@@ -52,7 +52,7 @@ export class FetalRecordsService {
   async findById(idFetal: string) {
     const fetalRecord = await this.fetalRecordRepository.findOne({
       where: { id: idFetal, isDeleted: 0 }, // Chỉ định điều kiện tìm theo id
-      relations: ['checkupRecords','appointments']
+      relations: ['checkupRecords','checkupRecords.appointment','appointments', 'mother']
     });
 
     if (!fetalRecord) {

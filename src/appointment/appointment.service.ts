@@ -160,7 +160,7 @@ export class AppointmentService {
     return await this.appointmentRepo.save(appointment);
   }
 
-  
+
   async startCheckup(appointmentId: string, servicesUsed: ServiceUsedDto[]) {
     const appointment = await this.appointmentRepo.findOne({
       where: { id: appointmentId },
@@ -323,6 +323,7 @@ export class AppointmentService {
         'doctor',
         'appointmentServices',
         'medicationBills',
+        'fetalRecord.mother'
       ],
     });
 
@@ -353,6 +354,7 @@ export class AppointmentService {
         'doctor',
         'appointmentServices',
         'medicationBills',
+        'fetalRecord.mother'
       ],
     });
   
