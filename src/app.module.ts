@@ -63,11 +63,11 @@ import { join } from 'path';
       defaults: {
         from: 'minhlola28@gmail.com', // Email gửi đi
       },
-      template: {
-        dir: join(__dirname, 'templates'), // Thư mục chứa template email
-        adapter: new HandlebarsAdapter(), // Sử dụng Handlebars
-        options: { strict: true },
-      },
+      // template: {
+      //   dir: join(__dirname, 'templates'), // Thư mục chứa template email
+      //   adapter: new HandlebarsAdapter(), // Sử dụng Handlebars
+      //   options: { strict: true },
+      // },
     }),
 
     PackagesModule,
