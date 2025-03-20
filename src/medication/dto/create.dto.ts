@@ -6,48 +6,39 @@ import {
   IsInt,
   IsNumber,
 } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export default class CreateMedicationDto {
   constructor(
     name: string = '',
     description: string = '',
-    createdAt: Date = new Date(),
-    updatedAt: Date = new Date(),
     dosage: string = '',
     price: number = 0,
-    isDeleted: number = 0,
   ) {
     this.name = name;
     this.description = description;
-    this.createdAt = createdAt;
-    this.updatedAt = updatedAt;
     this.price = price;
     this.dosage = dosage;
-    this.isDeleted = isDeleted;
   }
 
+  @ApiProperty({ example: 'Paracetamol', description: 'Tên thuốc' })
   @IsNotEmpty()
   @IsString()
   name: string;
 
+  @ApiProperty({ example: 'Thuốc giảm đau, hạ sốt', description: 'Mô tả thuốc' })
   @IsNotEmpty()
   @IsString()
   description: string;
 
+  @ApiProperty({ example: '500mg', description: 'Liều lượng thuốc' })
   @IsString()
   dosage: string;
 
-  @IsDate()
-  public createdAt: Date;
-
-  @IsDate()
-  public updatedAt: Date;
-
+  @ApiProperty({ example: 50000, description: 'Giá thuốc', type: 'number' })
   @IsNotEmpty()
   @IsNumber({ maxDecimalPlaces: 2 })
   price: number;
 
-  @IsOptional()
-  @IsInt()
-  isDeleted?: number;
+
 }
