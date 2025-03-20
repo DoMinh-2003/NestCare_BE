@@ -34,6 +34,7 @@ export class MedicationController {
 
   @Public()
   @ApiBearerAuth()
+  @ApiBody({ type: CreateMedicationDto })
   @Post('create')
   async createPackage(@Body() model: CreateMedicationDto, @Request() req) {
     if (!model) {

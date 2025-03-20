@@ -1,5 +1,7 @@
 import { AppointmentServiceEntity } from 'src/appointment/entities/appointmentService.entity';
 import { PackageService } from 'src/packages/entity/packageService.entity';
+import { UserPackageServiceUsage } from 'src/users/model/userPackageServiceUsage.entity';
+import {  WeekCheckupServiceEntity } from 'src/weekCheckupService/entities/WeekCheckupService.entity';
 import {
   Entity,
   Column,
@@ -7,6 +9,7 @@ import {
   UpdateDateColumn,
   PrimaryGeneratedColumn,
   OneToMany,
+  ManyToMany,
 } from 'typeorm';
 
 @Entity()
@@ -35,9 +38,16 @@ export class Services {
   @OneToMany(() => PackageService, (packageService) => packageService.service)
   packageServices: PackageService[];
 
+  @OneToMany(() => UserPackageServiceUsage, (userPackageServiceUsage) => userPackageServiceUsage.service)
+  serviceUsages: UserPackageServiceUsage[]; // Mối quan hệ với bảng FetalRecord
+
   @OneToMany(
     () => AppointmentServiceEntity,
     (appointmentService) => appointmentService.service,
   )
   appointmentServices: AppointmentServiceEntity[];
+
+
+  @ManyToMany(() => WeekCheckupServiceEntity, (weekCheckup) => weekCheckup.services)
+  weekCheckups: WeekCheckupServiceEntity[];
 }

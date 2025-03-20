@@ -1,18 +1,23 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { MoreThan, Repository } from 'typeorm';
 import { User } from './model/user.entity';
 import * as bcrypt from 'bcrypt';
 import { Role } from 'src/common/enums/role.enum';
 import { RegisterUserDto } from './dto/RegisterUserDto';
 import { UpdateUserDTO } from './dto/UpdateUserDTO';
 import { SearchWithPaginationDto } from './dto/searchWithPagination.dto';
+import { UserPackageServiceUsage } from './model/userPackageServiceUsage.entity';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+
+
+       @InjectRepository(UserPackageServiceUsage)
+        private userPackageServiceUsageRepository: Repository<UserPackageServiceUsage>,
   ) {}
 
   async findAll(): Promise<User[]> {
@@ -153,6 +158,20 @@ export class UsersService {
     };
   }
   
+
+
+  async getAvailableServices(userId: string) {
+    const services = await this.userPackageServiceUsageRepository.find({
+      where: { user: { id: userId }, slot: MoreThan(0) },
+      relations: ['service'],
+    });
+
+    if (!services.length) {
+      throw new NotFoundException('No available services found for this user');
+    }
+
+    return services;
+  }
   
   
   

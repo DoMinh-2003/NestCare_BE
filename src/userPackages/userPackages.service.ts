@@ -5,6 +5,8 @@ import { User } from 'src/users/model/user.entity';
 import { Packages } from 'src/packages/entity/package.entity';
 import { UserPackages, UserPackageStatus } from './entities/userPackages.entity';
 import { VnpayService } from 'src/common/service/vnpay.service';
+import { IPaginationOptions, paginate, Pagination } from 'nestjs-typeorm-paginate';
+import { UserPackageServiceUsage } from 'src/users/model/userPackageServiceUsage.entity';
 
 @Injectable()
 export class UserPackagesService {
@@ -21,6 +23,11 @@ export class UserPackagesService {
     @InjectRepository(Packages)
     private packagesRepository: Repository<Packages>,
 
+    @InjectRepository(UserPackageServiceUsage)
+    private userPackageServiceUsageRepository: Repository<UserPackageServiceUsage>,
+
+    
+
     private vnpayService: VnpayService, // Inject VnpayService vào constructor
   ) {}
 
@@ -30,12 +37,10 @@ export class UserPackagesService {
         where: { id: userId },
       });
       
-    //   const fetalRecord = await this.fetalRecordRepository.findOne({
-    //     where: { id: fetalRecordId },
-    //   });
       
       const packageEntity = await this.packagesRepository.findOne({
         where: { id: packageId },
+        relations: ['packageServices']
       });
       
     if (!user || !packageEntity) {
@@ -48,6 +53,11 @@ export class UserPackagesService {
       package: packageEntity,
       isActive: true,
     });
+
+
+ 
+
+
     const newUserPackage  = await this.userPackagesRepository.save(userPackage)
     const param = `?order=${newUserPackage.id}`
     const amount = userPackage.package.price * 100;
@@ -81,14 +91,87 @@ export class UserPackagesService {
     });
   }
     
-      // Thay đổi trạng thái của gói dịch vụ
+      // // Thay đổi trạng thái của gói dịch vụ
+      // async changeStatus(id: string, newStatus: UserPackageStatus): Promise<UserPackages> {
+      //   const userPackage = await this.userPackagesRepository.findOne({ where: { id: id }});
+      //   if (!userPackage) {
+      //     throw new Error('UserPackage not found');
+      //   }
+    
+      //   userPackage.status = newStatus;
+      //   return await this.userPackagesRepository.save(userPackage);
+      // }
+
       async changeStatus(id: string, newStatus: UserPackageStatus): Promise<UserPackages> {
-        const userPackage = await this.userPackagesRepository.findOne({ where: { id: id }});
+        const userPackage = await this.userPackagesRepository.findOne({
+          where: { id: id },
+          relations: ['user', 'package', 'package.packageServices','package.packageServices.service'],
+        });
+      
         if (!userPackage) {
           throw new Error('UserPackage not found');
         }
-    
+      
         userPackage.status = newStatus;
+      
+        // 🔹 Nếu trạng thái là PAID thì tạo `UserPackageServiceUsage`
+        if (UserPackageStatus.PAID.toLocaleLowerCase == newStatus.toLocaleLowerCase) {
+          const user = userPackage.user;
+          const packageServices = userPackage.package.packageServices;
+      
+          // Map dịch vụ sang UserPackageServiceUsage
+          const userServiceUsages = await Promise.all(
+            packageServices.map(async (servicePackage) => {
+              const existingUsage = await this.userPackageServiceUsageRepository.findOne({
+                where: { user: { id: user.id }, service: { id: servicePackage.service.id } },
+              });
+          
+              if (existingUsage) {
+                // Nếu đã tồn tại, cập nhật số lượt
+                existingUsage.slot += servicePackage.slot;
+                return this.userPackageServiceUsageRepository.save(existingUsage);
+              } else {
+                // Nếu chưa có, tạo mới
+                return this.userPackageServiceUsageRepository.create({
+                  user,
+                  service: servicePackage.service,
+                  slot: servicePackage.slot,
+                });
+              }
+            })
+          );
+          
+          // Lưu tất cả các bản ghi mới hoặc cập nhật
+          await this.userPackageServiceUsageRepository.save(userServiceUsages);
+
+          userPackage.isActive = true; // Kích hoạt gói sau khi thanh toán
+        }
+      
         return await this.userPackagesRepository.save(userPackage);
+      }
+      
+
+
+      async getAllUserPackages(
+        status?: string,
+        packageName?: string,
+        options: IPaginationOptions = { page: 1, limit: 10 }, // Đảm bảo options luôn có giá trị
+      ): Promise<Pagination<UserPackages>> {
+        const queryBuilder = this.userPackagesRepository.createQueryBuilder('userPackage')
+        .leftJoinAndSelect('userPackage.package', 'package') // Join bảng Packages
+        .leftJoinAndSelect('userPackage.user', 'user'); // Join bảng Users    
+        // Nếu có filter theo status
+        if (status) {
+          queryBuilder.andWhere('userPackage.status = :status', { status });
+        }
+    
+        // Nếu có filter theo package name
+        if (packageName) {
+          queryBuilder.andWhere('package.name LIKE :packageName', { packageName: `%${packageName}%` });
+        }
+    
+        queryBuilder.orderBy('userPackage.createdAt', 'DESC');
+    
+        return paginate<UserPackages>(queryBuilder, options);
       }
 }
