@@ -5,6 +5,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { FetalRecord } from 'src/fetal-records/entities/fetal-record.entity';
 import { UserPackages } from 'src/userPackages/entities/userPackages.entity';
 import { Appointment } from 'src/appointment/entities/appointment.entity';
+import { Reminder } from 'src/reminder/entities/reminder.entity';
+import { UserPackageServiceUsage } from './userPackageServiceUsage.entity';
 
 @Entity()
 export class User {
@@ -49,6 +51,12 @@ export class User {
 
   @OneToMany(() => Appointment, (appointment) => appointment.doctor)
   appointments: Appointment[]; // Mối quan hệ với bảng FetalRecord
+  
+  @OneToMany(() => Reminder, (reminder) => reminder.mother)
+  reminders: Reminder[]; // Mối quan hệ với bảng FetalRecord
+
+  @OneToMany(() => UserPackageServiceUsage, (userPackageServiceUsage) => userPackageServiceUsage.user)
+  serviceUsages: UserPackageServiceUsage[]; // Mối quan hệ với bảng FetalRecord
 
   @BeforeInsert()
   async initializeUserBeforeInsert() {

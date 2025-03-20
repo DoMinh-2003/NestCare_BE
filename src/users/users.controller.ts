@@ -88,4 +88,10 @@ export class UsersController {
   ) {
     return this.usersService.searchUsers(Number(pageNum), Number(pageSize), query, role);
   }
+
+
+  @Get(':userId/available-services')
+  async getAvailableServices(@Param('userId') userId: string) {
+    return this.usersService.getAvailableServices(userId);
+  }
 }
