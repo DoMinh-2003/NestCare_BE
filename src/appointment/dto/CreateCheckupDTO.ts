@@ -10,6 +10,17 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
+
+export class MedicationUsageDto {
+    @ApiProperty({ description: 'ID của thuốc', example: 'abc123' })
+    @IsString()
+    medicationId: string;
+  
+    @ApiProperty({ description: 'Số lượng', example: 2 })
+    @IsInt()
+    quantity: number;
+  }
+
 export class ServiceUsedDto {
   @ApiProperty({
     description: 'ID của dịch vụ đã sử dụng',
@@ -105,7 +116,7 @@ export class CreateCheckupDto {
 
   @ApiProperty({
     description: 'Danh sách thuốc được kê',
-    type: [Object],
+    type: [MedicationUsageDto],
     required: true,
   })
   @IsArray()
@@ -114,12 +125,4 @@ export class CreateCheckupDto {
   medications: MedicationUsageDto[];
 }
 
-export class MedicationUsageDto {
-  @ApiProperty({ description: 'ID của thuốc', example: 'abc123' })
-  @IsString()
-  medicationId: string;
 
-  @ApiProperty({ description: 'Số lượng', example: 2 })
-  @IsInt()
-  quantity: number;
-}

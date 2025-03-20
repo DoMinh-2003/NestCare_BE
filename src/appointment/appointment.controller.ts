@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Param, Body, Put } from '@nestjs/common';
+import { Controller, Post, Get, Param, Body, Put, Query } from '@nestjs/common';
 import { AppointmentService } from './appointment.service';
 import { AppointmentStatus } from './entities/appointment.entity';
 import { CreateCheckupDto, ServiceUsedDto } from './dto/CreateCheckupDTO';
@@ -47,6 +47,40 @@ export class AppointmentController {
   //     );
   //   }
 
+
+   // 2️⃣ API Chuyển trạng thái IN_PROGRESS, thêm dịch vụ, check gói
+   @Put('in-progress/:id')
+   @ApiOperation({ summary: 'Chuyển trạng thái IN_PROGRESS và thêm dịch vụ' })
+   @ApiBody({
+     type: ServiceUsedDto,
+     isArray: true, // ✅ Quan trọng: Định dạng thành mảng
+     description: 'Danh sách dịch vụ đã thực hiện',
+   })
+   async startCheckup(
+     @Param('id') id: string,
+     @Body() servicesUsed: ServiceUsedDto[],
+   ) {
+     console.log(id);
+     return this.appointmentService.startCheckup(id, servicesUsed);
+   }
+ 
+   // 3️⃣ API Chuyển trạng thái COMPLETED, lưu thông tin khám
+   @Put('completed/:id')
+   @ApiOperation({
+     summary: 'Chuyển trạng thái COMPLETED và lưu thông tin khám',
+   })
+   @ApiBody({ type: CreateCheckupDto })
+   async completeCheckup(
+     @Param('id') appointmentId: string,
+     @Body() checkupData: CreateCheckupDto,
+   ) {
+     return this.appointmentService.completeCheckup(
+       appointmentId,
+       checkupData,
+       checkupData.medications,
+     );
+   }
+
   // 1️⃣ API cập nhật trạng thái (ngoại trừ IN_PROGRESS & COMPLETED)
   @Put(':id/:status')
   @ApiOperation({ summary: 'Cập nhật trạng thái cuộc hẹn' })
@@ -65,37 +99,7 @@ export class AppointmentController {
     );
   }
 
-  // 2️⃣ API Chuyển trạng thái IN_PROGRESS, thêm dịch vụ, check gói
-  @Put(':id/in-progress')
-  @ApiOperation({ summary: 'Chuyển trạng thái IN_PROGRESS và thêm dịch vụ' })
-  @ApiBody({
-    type: ServiceUsedDto,
-    isArray: true, // ✅ Quan trọng: Định dạng thành mảng
-    description: 'Danh sách dịch vụ đã thực hiện',
-  })
-  async startCheckup(
-    @Param('id') appointmentId: string,
-    @Body() servicesUsed: ServiceUsedDto[],
-  ) {
-    return this.appointmentService.startCheckup(appointmentId, servicesUsed);
-  }
-
-  // 3️⃣ API Chuyển trạng thái COMPLETED, lưu thông tin khám
-  @Put(':id/completed')
-  @ApiOperation({
-    summary: 'Chuyển trạng thái COMPLETED và lưu thông tin khám',
-  })
-  @ApiBody({ type: CreateCheckupDto })
-  async completeCheckup(
-    @Param('id') appointmentId: string,
-    @Body() checkupData: CreateCheckupDto,
-  ) {
-    return this.appointmentService.completeCheckup(
-      appointmentId,
-      checkupData,
-      checkupData.medications,
-    );
-  }
+ 
 
   @Get(':fetalRecordId/history')
   async getFetalRecordHistory(@Param('fetalRecordId') fetalRecordId: string) {
@@ -117,5 +121,16 @@ export class AppointmentController {
   })
   async getAppointmentsByDoctor(@Param('doctorId') doctorId: string) {
     return this.appointmentService.getAppointmentsByDoctor(doctorId);
+  }
+
+
+  @Get('by-status/:status')
+  @ApiParam({
+    name: 'status',
+    description: 'Trạng thái của Appointments',
+    enum: AppointmentStatus, // Đây là enum bạn muốn sử dụng
+  })
+  async getByStatus(@Param('status') status: AppointmentStatus) {
+    return this.appointmentService.getAllAppointmentsByStatus(status);
   }
 }

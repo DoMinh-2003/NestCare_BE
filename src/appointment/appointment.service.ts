@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { MoreThan, Repository } from 'typeorm';
 import { Appointment, AppointmentStatus } from './entities/appointment.entity';
 import { FetalRecord } from 'src/fetal-records/entities/fetal-record.entity';
 import { User } from 'src/users/model/user.entity';
@@ -22,6 +22,8 @@ import { MailService } from 'src/common/service/mail.service';
 import { MedicationBill } from './entities/medicationBill.entity';
 import { Medication } from 'src/medication/medication.entity';
 import { MedicationBillDetail } from './entities/medicationBillDetail.entity';
+import { UserPackageServiceUsage } from 'src/users/model/userPackageServiceUsage.entity';
+import { app } from 'firebase-admin';
 
 @Injectable()
 export class AppointmentService {
@@ -59,6 +61,10 @@ export class AppointmentService {
     @InjectRepository(MedicationBillDetail)
     private readonly medicationBillDetailRepo: Repository<MedicationBillDetail>,
 
+
+      @InjectRepository(UserPackageServiceUsage)
+        private userPackageServiceUsageRepo: Repository<UserPackageServiceUsage>,
+
     private vnpayService: VnpayService,
 
     private mailService: MailService,
@@ -82,7 +88,7 @@ export class AppointmentService {
 
     this.mailService.sendWelcomeEmail(
       doctor.email,
-      'Xác Nhận Lịch Khác Ngày ' + date,
+      'Xác Nhận Lịch Khám Ngày ' + date,
       'Bạn hãy vô xác nhận lịch khám của mẹ bầu vào ngày ' + date,
     );
 
@@ -149,11 +155,26 @@ export class AppointmentService {
   ) {
     const appointment = await this.appointmentRepo.findOne({
       where: { id: appointmentId },
+      relations: ['fetalRecord', 'doctor', 'fetalRecord.mother'],
     });
     if (!appointment) throw new NotFoundException('Appointment not found');
 
     if (!Object.values(AppointmentStatus).includes(status)) {
       throw new BadRequestException('Invalid appointment status');
+    }
+    const date = appointment.appointmentDate
+    if(AppointmentStatus.CONFIRMED.toLocaleLowerCase == status.toLocaleLowerCase){
+        this.mailService.sendWelcomeEmail(
+            appointment.fetalRecord.mother.email,
+            'Lịch Khám Vào Ngày ' + date + ' Đã Được Chấp Nhận',
+            'Bạn hãy vô xem lịch khám của mình vào ngày ' + date,
+          );
+    }else if(AppointmentStatus.CANCELED.toLocaleLowerCase == status.toLocaleLowerCase){
+        this.mailService.sendWelcomeEmail(
+            appointment.fetalRecord.mother.email,
+            'Lịch Khám Vào Ngày ' + date + ' Đã Bị Từ Chối',
+            'Bạn hãy vô đặt lại lịch khám khác',
+          );
     }
 
     appointment.status = status;
@@ -162,20 +183,25 @@ export class AppointmentService {
 
 
   async startCheckup(appointmentId: string, servicesUsed: ServiceUsedDto[]) {
+    console.log(appointmentId);
+
     const appointment = await this.appointmentRepo.findOne({
       where: { id: appointmentId },
       relations: ['fetalRecord', 'doctor', 'fetalRecord.mother'],
     });
   
     if (!appointment) throw new NotFoundException('Appointment not found');
+
   
     const user = appointment.fetalRecord.mother;
   
-    // Lấy tất cả các gói của user (PAID và đang active)
-    const userPackages = await this.userPackageRepo.find({
-      where: { user, status: UserPackageStatus.PAID, isActive: true },
-      relations: ['package', 'package.packageServices'],
+    // 🔹 Lấy danh sách dịch vụ mà user đã mua từ UserPackageServiceUsage
+    const userServiceUsages = await this.userPackageServiceUsageRepo.find({
+      where: { user, slot: MoreThan(0) },
+      relations: ['service'],
     });
+
+
   
     let totalCost = 0;
     const appointmentServices = await Promise.all(
@@ -191,26 +217,20 @@ export class AppointmentService {
         let price = service.price;
         let isInPackage = false;
   
-        // Duyệt qua tất cả các gói xem có gói nào chứa dịch vụ này không
-        for (const userPackage of userPackages) {
-          const packageService = userPackage.package.packageServices.find(
-            (ps) => ps.service.id === service.id,
-          );
+        // 🔹 Tìm dịch vụ trong danh sách UserPackageServiceUsage
+        const userServiceUsage = userServiceUsages.find(
+          (usage) => usage.service.id === service.id && usage.slot > 0,
+        );
   
-          if (packageService && packageService.slot > 0) {
-            packageService.slot--; // Trừ lượt sử dụng
-            await this.packageServiceRepo.save(packageService);
-            price = 0; // Miễn phí nếu còn slot
-            isInPackage = true;
-            break; // Dừng lại ngay khi tìm thấy gói có slot còn lại
-          }
+        if (userServiceUsage) {
+          userServiceUsage.slot--; // Trừ lượt sử dụng
+          await this.userPackageServiceUsageRepo.save(userServiceUsage);
+          price = 0; // Miễn phí nếu còn slot
+          isInPackage = true;
+        } else {
+          totalCost += service.price; // Nếu không có trong gói hoặc hết slot -> tính tiền
         }
-  
-        // Nếu không có trong gói nào hoặc hết slot -> tính tiền
-        if (!isInPackage) {
-          totalCost += service.price;
-        }
-  
+
         return this.appointmentServiceRepo.create({
           appointment,
           service,
@@ -220,10 +240,9 @@ export class AppointmentService {
         });
       }),
     );
-  
-    await this.appointmentServiceRepo.save(appointmentServices);
+
+    const newAppointmentServices =  await this.appointmentServiceRepo.save(appointmentServices);
     appointment.status = AppointmentStatus.IN_PROGRESS;
-  
     const newAppointment = await this.appointmentRepo.save(appointment);
   
     if (totalCost > 0) {
@@ -231,12 +250,17 @@ export class AppointmentService {
       return await this.vnpayService.createPayment(
         newAppointment.id,
         param,
-        totalCost,
+        totalCost.toString(),
       );
     }
   
-    return newAppointment;
+    return {
+      appointment,
+      totalCost,
+      services: newAppointmentServices,
+    };
   }
+  
   
 
   async completeCheckup(
@@ -366,4 +390,19 @@ export class AppointmentService {
     }));
   }
   
+
+
+  async getAllAppointmentsByStatus(status: AppointmentStatus) {
+    return this.appointmentRepo.find({
+      where: { status },
+      relations: [
+        'fetalRecord',
+        'fetalRecord.checkupRecords',
+        'doctor',
+        'appointmentServices',
+        'medicationBills',
+        'fetalRecord.mother',
+      ],
+    });
+  }
 }

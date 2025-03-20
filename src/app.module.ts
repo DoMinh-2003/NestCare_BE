@@ -19,6 +19,9 @@ import { AppointmentModule } from './appointment/appointment.module';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import { join } from 'path';
+import { ReminderModule } from './reminder/reminder.module';
+import { WeekCheckupModule } from './weekCheckupService/weekCheckup.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -29,6 +32,9 @@ import { join } from 'path';
     CategoryModule,
     ServicesModule,
     AppointmentModule,
+    ReminderModule,
+    WeekCheckupModule,
+    ScheduleModule.forRoot(),
 
 
     ConfigModule.forRoot({
