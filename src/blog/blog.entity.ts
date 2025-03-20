@@ -25,7 +25,7 @@ export class Blog {
   @Column('text')
   content: string;
 
-  @Column({ type: 'tinyint', width: 1, default: 0 })
+  @Column({ type: 'tinyint', width: 1, default: 1 })
   isPublished: number;
 
   @CreateDateColumn()
