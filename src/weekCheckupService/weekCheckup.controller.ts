@@ -7,7 +7,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 
 @ApiBearerAuth()
 @ApiTags('Week Checkup') // Hiển thị nhóm API trong Swagger
-@Controller('week-checkup')
+@Controller('api/week-checkup')
 export class WeekCheckupController {
   constructor(private readonly weekCheckupService: WeekCheckupService) {}
 
