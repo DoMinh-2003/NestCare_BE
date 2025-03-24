@@ -72,7 +72,7 @@ export class PackagesController {
     return formatResponse<Packages>(item);
   }
   @Get()
-  @ApiBearerAuth()
+  @Public()
   @ApiResponse({ status: 200, description: 'Get all packages with services and slots', type: [Packages] })
   async getAllPackages() {
     try {

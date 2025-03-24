@@ -80,6 +80,7 @@ export class PackagesService {
  // Lấy tất cả các gói dịch vụ với các dịch vụ liên quan và slot
  async getAllPackages(): Promise<Packages[]> {
   const packages = await this.packagesRepository.find({
+    where: {isDeleted: false},
     relations: ['packageServices', 'packageServices.service'],
   });
 
