@@ -17,7 +17,7 @@ export class MedicationService {
   constructor(
     @InjectRepository(Medication)
     private readonly medicationRepository: Repository<Medication>,
-  ) {}
+  ) { }
   async createMedication(model: CreateMedicationDto) {
     if (isEmptyObject(model)) {
       throw new CustomHttpException(
@@ -32,7 +32,7 @@ export class MedicationService {
     if (existingMedication) {
       throw new CustomHttpException(
         HttpStatus.CONFLICT,
-        `A medication with this name: "${model.name}" already exists`,
+        `Thuốc với tên này: "${model.name}" đã tồn tại`,
       );
     }
     const newMedication = this.medicationRepository.create({
@@ -81,49 +81,49 @@ export class MedicationService {
   }
 
   async getMedication(id: string): Promise<Medication | null> {
-        return await this.medicationRepository.findOne({
-          where: { id, isDeleted: 0 },
-        });
-        }
-  
-    async updateMedication(id: string, model: UpdateMedicationDto, user): Promise<Medication> {
-            
-            const medication = await this.getMedication(id);
-        
-            if (!medication) {
-              throw new CustomHttpException(
-                HttpStatus.NOT_FOUND,
-                `A medication with this id: "${id}" does not exist`,
-              );
-            }
-        
-            if (model.name) {
-              const existingMedication = await this.medicationRepository.findOne({
-                where: { name: model.name, id: Not(id) },
-              });
-              if (existingMedication) {
-                throw new CustomHttpException(
-                  HttpStatus.BAD_REQUEST,
-                  `A medication with name "${model.name}" already exists.`,
-                );
-              }
-            }
-        
-            // Chỉ cập nhật các trường được truyền vào
-            const updatedMedication = Object.assign(medication, model, { updatedAt: new Date() });
-        
-            return await this.medicationRepository.save(updatedMedication);
-          }
-  
-          async deleteMedication(id: string): Promise<boolean> {
-            const medication = await this.getMedication(id);
-            if (!medication) {
-              throw new CustomHttpException(
-                HttpStatus.BAD_REQUEST,
-                `A medication with this id: "${id}" not exists`,
-              );
-            }
-            await this.medicationRepository.update(id, { isDeleted: 1 });
-            return true;
-          }
+    return await this.medicationRepository.findOne({
+      where: { id, isDeleted: 0 },
+    });
+  }
+
+  async updateMedication(id: string, model: UpdateMedicationDto, user): Promise<Medication> {
+
+    const medication = await this.getMedication(id);
+
+    if (!medication) {
+      throw new CustomHttpException(
+        HttpStatus.NOT_FOUND,
+        `A medication with this id: "${id}" does not exist`,
+      );
+    }
+
+    if (model.name) {
+      const existingMedication = await this.medicationRepository.findOne({
+        where: { name: model.name, id: Not(id) },
+      });
+      if (existingMedication) {
+        throw new CustomHttpException(
+          HttpStatus.BAD_REQUEST,
+          `Thuốc với tên này "${model.name}" đã tồn tại.`,
+        );
+      }
+    }
+
+    // Chỉ cập nhật các trường được truyền vào
+    const updatedMedication = Object.assign(medication, model, { updatedAt: new Date() });
+
+    return await this.medicationRepository.save(updatedMedication);
+  }
+
+  async deleteMedication(id: string): Promise<boolean> {
+    const medication = await this.getMedication(id);
+    if (!medication) {
+      throw new CustomHttpException(
+        HttpStatus.BAD_REQUEST,
+        `A medication with this id: "${id}" not exists`,
+      );
+    }
+    await this.medicationRepository.update(id, { isDeleted: 1 });
+    return true;
+  }
 }

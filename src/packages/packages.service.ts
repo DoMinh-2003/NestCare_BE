@@ -25,7 +25,7 @@ export class PackagesService {
 
     @InjectRepository(Services)
     private readonly servicesRepository: Repository<Services>,
-  ) {}
+  ) { }
 
   async createPackage(model: CreatePackageDto): Promise<Packages> {
     // Kiểm tra xem gói dịch vụ đã tồn tại chưa
@@ -35,7 +35,7 @@ export class PackagesService {
     if (existingPackage) {
       throw new CustomHttpException(
         HttpStatus.CONFLICT,
-        `A package with this name: "${model.name}" already exists`,
+        `Gói với tên này "${model.name}" đã tồn tại`,
       );
     }
 
@@ -77,24 +77,24 @@ export class PackagesService {
   }
 
 
- // Lấy tất cả các gói dịch vụ với các dịch vụ liên quan và slot
- async getAllPackages(): Promise<Packages[]> {
-  const packages = await this.packagesRepository.find({
-    where: {isDeleted: false},
-    relations: ['packageServices', 'packageServices.service'],
-  });
+  // Lấy tất cả các gói dịch vụ với các dịch vụ liên quan và slot
+  async getAllPackages(): Promise<Packages[]> {
+    const packages = await this.packagesRepository.find({
+      where: { isDeleted: false },
+      relations: ['packageServices', 'packageServices.service'],
+    });
 
-  return packages;
-}
+    return packages;
+  }
 
-// async getAllPackagesByUser(): Promise<Packages[]> {
-//   const packages = await this.packagesRepository.find({
-//     where:{isDeleted: false},
-//     relations: ['packageServices', 'packageServices.service'],
-//   });
+  // async getAllPackagesByUser(): Promise<Packages[]> {
+  //   const packages = await this.packagesRepository.find({
+  //     where:{isDeleted: false},
+  //     relations: ['packageServices', 'packageServices.service'],
+  //   });
 
-//   return packages;
-// }
+  //   return packages;
+  // }
 
   async getPackages(
     model: SearchWithPaginationDto,
@@ -133,7 +133,7 @@ export class PackagesService {
 
     return result;
   }
- 
+
   async getPackage(id: string): Promise<Packages | null> {
     return await this.packagesRepository.findOne({
       where: { id },
@@ -212,7 +212,7 @@ export class PackagesService {
     return updatedPackage;
   }
 
-  async deletePackage(id: string, isDeleted: boolean ): Promise<boolean> {
+  async deletePackage(id: string, isDeleted: boolean): Promise<boolean> {
     const item = await this.getPackage(id);
     if (!item) {
       throw new CustomHttpException(

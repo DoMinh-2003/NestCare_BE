@@ -17,7 +17,7 @@ export class ServicesService {
   constructor(
     @InjectRepository(Services)
     private readonly servicesRepository: Repository<Services>,
-  ) {}
+  ) { }
 
   // Tạo mới dịch vụ
   async createService(model: CreateServicesDto): Promise<Services> {
@@ -34,7 +34,7 @@ export class ServicesService {
     if (existingService) {
       throw new CustomHttpException(
         HttpStatus.CONFLICT,
-        `A service with this name: "${model.name}" already exists`,
+        `Dịch vụ với tên này: "${model.name}" đã tồn tại`,
       );
     }
 
@@ -87,7 +87,7 @@ export class ServicesService {
 
   async getService(id: string): Promise<Services | null> {
     return await this.servicesRepository.findOne({
-      where: { id},
+      where: { id },
     });
   }
   // Cập nhật dịch vụ
@@ -104,7 +104,7 @@ export class ServicesService {
     return await this.servicesRepository.save(updatedService);
   }
 
-  async deleteService(id: string,isDeleted: boolean): Promise<boolean> {
+  async deleteService(id: string, isDeleted: boolean): Promise<boolean> {
     const service = await this.getService(id);
     if (!service) {
       throw new CustomHttpException(
@@ -119,7 +119,7 @@ export class ServicesService {
 
   // Lấy tất cả các dịch vụ
   async getServicesAdmin(): Promise<Services[]> {
-      return this.servicesRepository.find();
+    return this.servicesRepository.find();
   }
 
   // async getAllServicesByUser(): Promise<Services[]> {

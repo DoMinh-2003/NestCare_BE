@@ -17,16 +17,16 @@ export class BlogsService {
   constructor(
     @InjectRepository(Blog)
     private readonly blogRepository: Repository<Blog>,
-  ) {}
+  ) { }
 
   async createBlog(model: CreateBlogDto, user): Promise<Blog> {
-    if(!model){
-        throw new CustomHttpException(HttpStatus.NOT_FOUND, 'You need to send data');
+    if (!model) {
+      throw new CustomHttpException(HttpStatus.NOT_FOUND, 'You need to send data');
     }
     if (isEmptyObject(model)) {
-        throw new CustomHttpException(HttpStatus.NOT_FOUND, 'Model data is empty');
-      }
-  
+      throw new CustomHttpException(HttpStatus.NOT_FOUND, 'Model data is empty');
+    }
+
 
     const existingBlog = await this.blogRepository.findOne({
       where: { title: model.title },
@@ -34,7 +34,7 @@ export class BlogsService {
     if (existingBlog) {
       throw new CustomHttpException(
         HttpStatus.CONFLICT,
-        `A blog with this title: "${model.title}" already exists`,
+        `Blog với tiêu đề này: "${model.title}" đã tồn tại`,
       );
     }
     const newBlog = this.blogRepository.create({
@@ -59,11 +59,11 @@ export class BlogsService {
     //   query.andWhere('blog.categoryId = :categoryId', { categoryId });
     // }
 
-      query.andWhere('blog.isPublished = :isPublished', {
-        isPublished,
-      });
+    query.andWhere('blog.isPublished = :isPublished', {
+      isPublished,
+    });
 
-      query.orderBy('blog.createdAt', 'DESC');
+    query.orderBy('blog.createdAt', 'DESC');
 
     query.skip((pageNum - 1) * pageSize).take(pageSize);
 
@@ -83,8 +83,8 @@ export class BlogsService {
   }
 
   async updateBlog(id: string, model: UpdateBlogDto, user): Promise<Blog> {
-    if(!model){
-        throw new CustomHttpException(HttpStatus.NOT_FOUND, 'You need to send data');
+    if (!model) {
+      throw new CustomHttpException(HttpStatus.NOT_FOUND, 'You need to send data');
     }
     const blog = await this.getBlog(id);
 
@@ -102,7 +102,7 @@ export class BlogsService {
       if (existingBlog) {
         throw new CustomHttpException(
           HttpStatus.BAD_REQUEST,
-          `A blog with title "${model.title}" already exists.`,
+          `Blog với tiêu đề này "${model.title}" đã tồn tại.`,
         );
       }
     }

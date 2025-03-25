@@ -12,28 +12,28 @@ export class CategoryService {
   constructor(
     @InjectRepository(Category)
     private readonly categoryRepository: Repository<Category>,
-  ) {}
+  ) { }
 
   async createCategory(model: CreateCategoryDto, user): Promise<Category> {
-    
-      if (isEmptyObject(model)) {
-        throw new CustomHttpException(HttpStatus.NOT_FOUND, 'Model data is empty');
-      }
-  
-      const existingCategory = await this.categoryRepository.findOne({
-        where: { name: model.name },
-      });
-      if (existingCategory) {
-        throw new CustomHttpException(
-          HttpStatus.CONFLICT,
-          `A category with this title: "${model.name}" already exists`,
-        );
-      }
-      const newCategory = this.categoryRepository.create({
-        ...model,
-      });
-      return await this.categoryRepository.save(newCategory);
+
+    if (isEmptyObject(model)) {
+      throw new CustomHttpException(HttpStatus.NOT_FOUND, 'Model data is empty');
     }
+
+    const existingCategory = await this.categoryRepository.findOne({
+      where: { name: model.name },
+    });
+    if (existingCategory) {
+      throw new CustomHttpException(
+        HttpStatus.CONFLICT,
+        `Danh mục với tên này: "${model.name}" đã tồn tại`,
+      );
+    }
+    const newCategory = this.categoryRepository.create({
+      ...model,
+    });
+    return await this.categoryRepository.save(newCategory);
+  }
 
   async getCategories(
     model: SearchWithPaginationDto,
@@ -77,48 +77,48 @@ export class CategoryService {
     return await this.categoryRepository.findOne({
       where: { id, isDeleted: 0 },
     });
+  }
+
+  async updateCategory(id: string, model: UpdateCategoryDto, user): Promise<Category> {
+    if (!model) {
+      throw new CustomHttpException(HttpStatus.NOT_FOUND, 'You need to send data');
+    }
+    const category = await this.getCategory(id);
+
+    if (!category) {
+      throw new CustomHttpException(
+        HttpStatus.NOT_FOUND,
+        `A category with this id: "${id}" does not exist`,
+      );
     }
 
-    async updateCategory(id: string, model: UpdateCategoryDto, user): Promise<Category> {
-        if(!model){
-            throw new CustomHttpException(HttpStatus.NOT_FOUND, 'You need to send data');
-        }
-        const category = await this.getCategory(id);
-    
-        if (!category) {
-          throw new CustomHttpException(
-            HttpStatus.NOT_FOUND,
-            `A category with this id: "${id}" does not exist`,
-          );
-        }
-    
-        if (model.name) {
-          const existingCategory = await this.categoryRepository.findOne({
-            where: { name: model.name, id: Not(id) },
-          });
-          if (existingCategory) {
-            throw new CustomHttpException(
-              HttpStatus.BAD_REQUEST,
-              `A category with title "${model.name}" already exists.`,
-            );
-          }
-        }
-    
-        // Chỉ cập nhật các trường được truyền vào
-        const updatedCategory = Object.assign(category, model, { updatedAt: new Date() });
-    
-        return await this.categoryRepository.save(updatedCategory);
+    if (model.name) {
+      const existingCategory = await this.categoryRepository.findOne({
+        where: { name: model.name, id: Not(id) },
+      });
+      if (existingCategory) {
+        throw new CustomHttpException(
+          HttpStatus.BAD_REQUEST,
+          `Danh mục với tên này "${model.name}" đã tồn tại.`,
+        );
       }
+    }
 
-    async deleteCategory(id: string): Promise<boolean> {
-        const category = await this.getCategory(id);
-        if (!category) {
-          throw new CustomHttpException(
-            HttpStatus.BAD_REQUEST,
-            `A category with this id: "${id}" not exists`,
-          );
-        }
-        await this.categoryRepository.update(id, { isDeleted: 1 });
-        return true;
-      }
+    // Chỉ cập nhật các trường được truyền vào
+    const updatedCategory = Object.assign(category, model, { updatedAt: new Date() });
+
+    return await this.categoryRepository.save(updatedCategory);
+  }
+
+  async deleteCategory(id: string): Promise<boolean> {
+    const category = await this.getCategory(id);
+    if (!category) {
+      throw new CustomHttpException(
+        HttpStatus.BAD_REQUEST,
+        `A category with this id: "${id}" not exists`,
+      );
+    }
+    await this.categoryRepository.update(id, { isDeleted: 1 });
+    return true;
+  }
 }
