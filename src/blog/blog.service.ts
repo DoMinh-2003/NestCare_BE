@@ -11,6 +11,7 @@ import {
   UpdateBlogDto,
 } from './dto';
 import { CustomHttpException } from 'src/common/exceptions';
+import { User } from 'src/users/model/user.entity';
 
 @Injectable()
 export class BlogsService {
@@ -39,6 +40,7 @@ export class BlogsService {
     }
     const newBlog = this.blogRepository.create({
       ...model,
+      user: user,
     });
     return await this.blogRepository.save(newBlog);
   }
