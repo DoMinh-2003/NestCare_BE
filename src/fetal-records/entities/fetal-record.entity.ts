@@ -8,6 +8,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToMany,
+  ManyToMany,
 } from 'typeorm';
 import { Appointment } from 'src/appointment/entities/appointment.entity';
 import { CheckupRecord } from 'src/appointment/entities/checkupRecord.entity';
@@ -51,7 +52,7 @@ export class FetalRecord {
   //   @OneToMany(() => UserPackages, (userPackages) => userPackages.fetalRecord)
   //   userPackages: UserPackages[];  // Mối quan hệ với bảng UserPackages
 
-  @OneToMany(() => Appointment, (appointment) => appointment.fetalRecord)
+  @ManyToMany(() => Appointment, (appointment) => appointment.fetalRecords)
   appointments: Appointment[];
 
   @OneToMany(() => CheckupRecord, (checkupRecord) => checkupRecord.fetalRecord)

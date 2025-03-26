@@ -111,12 +111,15 @@ export class WeekCheckupService {
       const startOfWeek = this.getStartOfWeek(today);
       const endOfWeek = this.getEndOfWeek(today);
   
-      const hasRecentAppointment = await this.appointmentRepo.findOne({
-        where: {
-          fetalRecord: fetal,
-          appointmentDate: Between(startOfWeek, endOfWeek),
-        },
-      });
+      const hasRecentAppointment = await this.appointmentRepo
+      .createQueryBuilder('appointment')
+      .innerJoin('appointment.fetalRecords', 'fetalRecord')
+      .where('fetalRecord.id = :fetalId', { fetalId: fetal.id })
+      .andWhere('appointment.appointmentDate BETWEEN :startOfWeek AND :endOfWeek', {
+        startOfWeek,
+        endOfWeek,
+      })
+      .getOne();
   
       const hasRecentCheckup = await this.checkupRecordRepo.findOne({
         where: {

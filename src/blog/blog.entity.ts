@@ -41,11 +41,6 @@ export class Blog {
   @JoinColumn({ name: 'categoryId' }) // Chỉ định cột categoryId
   category: Category;
 
-  @Column({ nullable: false }) // Đảm bảo không thể null
-  categoryId: string;
-  @Column({ nullable: false })
-  userId: string;
-
   @ManyToOne(() => User, (user) => user.blogs, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
   user: User;

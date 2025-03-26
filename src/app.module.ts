@@ -22,6 +22,7 @@ import { join } from 'path';
 import { ReminderModule } from './reminder/reminder.module';
 import { WeekCheckupModule } from './weekCheckupService/weekCheckup.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { SlotModule } from './slots/slot.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     AppointmentModule,
     ReminderModule,
     WeekCheckupModule,
+    SlotModule,
     ScheduleModule.forRoot(),
 
 

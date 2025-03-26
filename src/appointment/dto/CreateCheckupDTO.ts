@@ -10,16 +10,15 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
-
 export class MedicationUsageDto {
-    @ApiProperty({ description: 'ID của thuốc', example: 'abc123' })
-    @IsString()
-    medicationId: string;
-  
-    @ApiProperty({ description: 'Số lượng', example: 2 })
-    @IsInt()
-    quantity: number;
-  }
+  @ApiProperty({ description: 'ID của thuốc', example: 'abc123' })
+  @IsString()
+  medicationId: string;
+
+  @ApiProperty({ description: 'Số lượng', example: 2 })
+  @IsInt()
+  quantity: number;
+}
 
 export class ServiceUsedDto {
   @ApiProperty({
@@ -39,33 +38,13 @@ export class ServiceUsedDto {
   notes?: string;
 }
 
-export class CreateCheckupDto {
+export class FetalCheckupDto {
   @ApiProperty({
-    description: 'Cân nặng của mẹ',
-    example: 60.5,
-    required: false,
+    description: 'ID của hồ sơ thai nhi',
+    example: 'uuid-of-fetal-record-1',
   })
-  @IsOptional()
-  @IsDecimal()
-  motherWeight?: number;
-
-  @ApiProperty({
-    description: 'Huyết áp của mẹ',
-    example: '120/80',
-    required: false,
-  })
-  @IsOptional()
-  @IsString()
-  motherBloodPressure?: string;
-
-  @ApiProperty({
-    description: 'Tình trạng sức khỏe của mẹ',
-    example: 'Bình thường',
-    required: false,
-  })
-  @IsOptional()
-  @IsString()
-  motherHealthStatus?: string;
+  @IsUUID()
+  fetalRecordId: string;
 
   @ApiProperty({
     description: 'Cân nặng của thai nhi',
@@ -102,17 +81,18 @@ export class CreateCheckupDto {
   @IsOptional()
   @IsString()
   warning?: string;
+}
 
-  //   @ApiProperty({
-  //     description: 'Danh sách dịch vụ đã thực hiện',
-  //     type: [ServiceUsedDto],
-  //     required: false,
-  //   })
-  //   @IsOptional()
-  //   @IsArray()
-  //   @ValidateNested({ each: true })
-  //   @Type(() => ServiceUsedDto)
-  //   servicesUsed?: ServiceUsedDto[];
+export class CreateCheckupDto {
+  @ApiProperty({
+    description: 'Danh sách thông tin khám cho từng thai nhi',
+    type: [FetalCheckupDto],
+    required: true,
+  })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => FetalCheckupDto)
+  fetalCheckups: FetalCheckupDto[];
 
   @ApiProperty({
     description: 'Danh sách thuốc được kê',
@@ -124,5 +104,3 @@ export class CreateCheckupDto {
   @Type(() => MedicationUsageDto)
   medications: MedicationUsageDto[];
 }
-
-
