@@ -8,6 +8,7 @@ import { Appointment } from 'src/appointment/entities/appointment.entity';
 import { Reminder } from 'src/reminder/entities/reminder.entity';
 import { UserPackageServiceUsage } from './userPackageServiceUsage.entity';
 import { Blog } from 'src/blog/blog.entity';
+import { AppointmentHistory } from 'src/appointment/entities/appointmentHistory.entity';
 
 @Entity()
 export class User {
@@ -59,8 +60,13 @@ export class User {
   @OneToMany(() => UserPackageServiceUsage, (userPackageServiceUsage) => userPackageServiceUsage.user)
   serviceUsages: UserPackageServiceUsage[]; // Mối quan hệ với bảng FetalRecord
 
+
   @OneToMany(() => Blog, (blog) => blog.user)
   blogs: Blog[];
+
+  @OneToMany(() => AppointmentHistory, (history) => history.changedBy)
+  changedAppointmentHistory: AppointmentHistory[];
+
   @BeforeInsert()
   async initializeUserBeforeInsert() {
     this.generateId(); // Gọi generateId trước khi băm mật khẩu

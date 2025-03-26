@@ -16,10 +16,12 @@ import { MedicationBillDetail } from './entities/medicationBillDetail.entity';
 import { MedicationBill } from './entities/medicationBill.entity';
 import { Medication } from 'src/medication/medication.entity';
 import { UserPackageServiceUsage } from 'src/users/model/userPackageServiceUsage.entity';
+import { AppointmentHistory } from './entities/appointmentHistory.entity';
+import { Slot } from 'src/slots/entities/slot.entity';
 
 
 @Module({
-  imports: [TypeOrmModule.forFeature([ UserPackageServiceUsage ,Appointment, FetalRecord, Medication, User, CheckupRecord, AppointmentServiceEntity, UserPackages, PackageService, Services, MedicationBillDetail, MedicationBill])],
+  imports: [TypeOrmModule.forFeature([Slot, UserPackageServiceUsage, AppointmentHistory ,Appointment, FetalRecord, Medication, User, CheckupRecord, AppointmentServiceEntity, UserPackages, PackageService, Services, MedicationBillDetail, MedicationBill])],
   controllers: [AppointmentController],
   providers: [AppointmentService,VnpayService,MailService],
 })

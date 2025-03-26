@@ -3,6 +3,8 @@ import { User } from 'src/users/model/user.entity';
 import {
   Column,
   Entity,
+  JoinTable,
+  ManyToMany,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
@@ -10,6 +12,8 @@ import {
 import { CheckupRecord } from './checkupRecord.entity';
 import { AppointmentServiceEntity } from './appointmentService.entity';
 import { MedicationBill } from './medicationBill.entity';
+import { AppointmentHistory } from './appointmentHistory.entity';
+import { Slot } from 'src/slots/entities/slot.entity';
 
 export enum AppointmentStatus {
   PENDING = 'PENDING', // Đang chờ xác nhận
@@ -18,6 +22,7 @@ export enum AppointmentStatus {
   IN_PROGRESS = 'IN_PROGRESS', // Đang được khám
   COMPLETED = 'COMPLETED', // Đã hoàn tất
   CANCELED = 'CANCELED', // Đã hủy
+  FAIL = 'FAIL', // 
 }
 
 @Entity()
@@ -25,14 +30,19 @@ export class Appointment {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => FetalRecord, (fetalRecord) => fetalRecord.appointments)
-  fetalRecord: FetalRecord;
+  @ManyToMany(() => FetalRecord, (fetalRecord) => fetalRecord.appointments)
+  @JoinTable()
+  fetalRecords: FetalRecord[];
 
   @ManyToOne(() => User, (doctor) => doctor.appointments)
   doctor: User;
 
-  @Column({ type: 'timestamp' })
+  @Column({ type: 'date' })
   appointmentDate: Date;
+
+
+  @ManyToOne(() => Slot, (slot) => slot.appointments)
+  slot: Slot; // Thêm mối quan hệ với Slot
 
   @Column({
     type: 'enum',
@@ -43,6 +53,9 @@ export class Appointment {
 
   @OneToMany(() => CheckupRecord, (checkupRecord) => checkupRecord.appointment)
   checkupRecords: CheckupRecord[];
+
+  @OneToMany(() => AppointmentHistory, (appointmentHistory) => appointmentHistory.appointment)
+  history: AppointmentHistory[];
 
   @OneToMany(
     () => AppointmentServiceEntity,
@@ -55,6 +68,6 @@ export class Appointment {
   })
   medicationBills: MedicationBill[];
 
-  @Column({ type: 'boolean', default: false })
-  isFollow: boolean;
+  // @Column({ type: 'boolean', default: false })
+  // isFollow: boolean;
 }

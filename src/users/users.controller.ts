@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -7,11 +8,13 @@ import {
   Post,
   Put,
   Query,
+  Request,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import {
   ApiBearerAuth,
   ApiBody,
+  ApiOperation,
   ApiParam,
   ApiQuery,
   ApiResponse,
@@ -24,6 +27,7 @@ import { User } from './model/user.entity';
 import { ToggleDeleteDto } from '../common/models/ToggleDeleteDto';
 import { UpdateUserDTO } from './dto/UpdateUserDTO';
 import { SearchWithPaginationDto } from './dto/searchWithPagination.dto';
+import { Public } from 'src/auth/decorators/public.decorator';
 @ApiBearerAuth()
 @ApiTags('Users')
 @Controller('api/users')
@@ -43,11 +47,7 @@ export class UsersController {
     return this.usersService.registerUser(registerUserDto);
   }
 
-  @Get(':id')
-  @ApiResponse({ status: 200, description: 'Get user by ID' })
-  async findOne(@Param('id') id: string): Promise<User> {
-    return this.usersService.findOne(id);
-  }
+
 
   @Get('role/:role')
   async getUsersByRole(@Param('role') role: Role) {
@@ -63,7 +63,7 @@ export class UsersController {
     return this.usersService.update(id, updateUserDto);
   }
 
-  @Put(':id/toggle-delete')
+  @Put('toggle-delete/:id')
   @ApiBody({
     description: 'Toggle isDeleted status for the service',
     type: ToggleDeleteDto,
@@ -75,6 +75,7 @@ export class UsersController {
   ): Promise<void> {
     return this.usersService.toggleDeleteStatus(id, toggleDeleteDto.isDeleted);
   }
+
   @Get('search/:pageNum/:pageSize')
   @ApiParam({ name: 'pageNum', description: 'Số trang', example: 1 })
   @ApiParam({ name: 'pageSize', description: 'Số lượng bản ghi trên mỗi trang', example: 10 })
@@ -90,8 +91,45 @@ export class UsersController {
   }
 
 
-  @Get(':userId/available-services')
+  @Get('available-services/:userId')
   async getAvailableServices(@Param('userId') userId: string) {
     return this.usersService.getAvailableServices(userId);
+  }
+
+  @Get('available-doctor')
+  @ApiOperation({
+    summary: 'Lấy tất cả bác sĩ rảnh vào một ngày và khung giờ cụ thể',
+  })
+  @ApiQuery({
+    name: 'date',
+    description: 'Ngày cần kiểm tra (YYYY-MM-DD)',
+    type: 'string',
+    required: true,
+  })
+  @ApiQuery({
+    name: 'slotId',
+    description: 'ID của khung giờ cần kiểm tra',
+    type: 'string',
+    required: true,
+  })
+  @Public()
+  async getAvailableDoctors(
+    @Query('date') dateString: string,
+    @Query('slotId') slotId: string,
+  ) {
+    // You might want to add a check here to ensure only authorized users can access this
+
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      throw new BadRequestException('Invalid date format. Please use YYYY-MM-DD.');
+    }
+
+    return this.usersService.getAvailableDoctors(date, slotId);
+  }
+
+  @Get(':id')
+  @ApiResponse({ status: 200, description: 'Get user by ID' })
+  async findOne(@Param('id') id: string): Promise<User> {
+    return this.usersService.findOne(id);
   }
 }

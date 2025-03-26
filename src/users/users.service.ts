@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { MoreThan, Repository } from 'typeorm';
+import { Between, MoreThan, Repository } from 'typeorm';
 import { User } from './model/user.entity';
 import * as bcrypt from 'bcrypt';
 import { Role } from 'src/common/enums/role.enum';
@@ -8,6 +8,7 @@ import { RegisterUserDto } from './dto/RegisterUserDto';
 import { UpdateUserDTO } from './dto/UpdateUserDTO';
 import { SearchWithPaginationDto } from './dto/searchWithPagination.dto';
 import { UserPackageServiceUsage } from './model/userPackageServiceUsage.entity';
+import { Appointment } from 'src/appointment/entities/appointment.entity';
 
 @Injectable()
 export class UsersService {
@@ -18,6 +19,11 @@ export class UsersService {
 
        @InjectRepository(UserPackageServiceUsage)
         private userPackageServiceUsageRepository: Repository<UserPackageServiceUsage>,
+
+        @InjectRepository(Appointment)
+        private appointmentRepo: Repository<Appointment>,
+
+        
   ) {}
 
   async findAll(): Promise<User[]> {
@@ -173,6 +179,32 @@ export class UsersService {
     return services;
   }
   
+
+  async getAvailableDoctors(date: Date, slotId: string): Promise<User[]> {
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    // 1. Lấy tất cả các bác sĩ
+    const allDoctors = await this.userRepository.find({ where: { role: Role.Doctor, isDeleted: false } });
+   
+
+    // 2. Lấy tất cả các cuộc hẹn đã được đặt trong ngày và khung giờ cụ thể
+    const bookedAppointments = await this.appointmentRepo.find({
+      where: {
+        appointmentDate: Between(startOfDay, endOfDay),
+        slot: { id: slotId },
+      },
+      relations: ['doctor'], // Để có thể truy cập thông tin bác sĩ
+    });
+    // 3. Lọc ra các bác sĩ không có trong danh sách các cuộc hẹn đã đặt
+    const availableDoctors = allDoctors.filter(doctor => {
+      return !bookedAppointments.some(appointment => appointment.doctor.id === doctor.id);
+    });
+
+    return availableDoctors;
+  }
   
   
 }
