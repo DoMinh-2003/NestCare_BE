@@ -22,9 +22,6 @@ export class Blog {
   @Column()
   description: string;
 
-  @Column()
-  image: string;
-
   @Column('text')
   content: string;
 

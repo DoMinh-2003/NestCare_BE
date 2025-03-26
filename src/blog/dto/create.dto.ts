@@ -4,14 +4,12 @@ export default class CreateBlogDto {
   constructor(
     title: string,
     categoryId: string,
-    image: string,
     description: string,
     content: string,
     userId: string
   ) {
     this.title = title;
     this.categoryId = categoryId;
-    this.image = image;
     this.description = description;
     this.content = content;
     this.userId = userId;
@@ -28,10 +26,6 @@ export default class CreateBlogDto {
   @IsNotEmpty()
   @IsString()
   title: string;
-
-  @IsNotEmpty()
-  @IsString()
-  image: string;
 
   @IsNotEmpty()
   @IsString()
