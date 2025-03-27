@@ -21,9 +21,9 @@ export class ReminderService {
 
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
-    
+
     private readonly mailService: MailService, // Inject MailService để gửi email
-  ) {}
+  ) { }
 
   async createReminder(reminderDto: CreateReminderDto) {
     // ✅ Tìm user theo ID (mẹ bầu)
@@ -106,4 +106,23 @@ export class ReminderService {
       this.scheduleDailyReminder(reminder);
     }
   }
+
+  async getRemindersByMotherId(motherId: string) {
+    const mother = await this.userRepository.findOne({
+      where: { id: motherId },
+    });
+
+    if (!mother) {
+      throw new NotFoundException('Mẹ bầu không tồn tại.');
+    }
+
+    const reminders = await this.reminderRepository.find({
+      where: { mother: { id: motherId } },
+      relations: ['mother'],
+      order: { startDate: 'ASC' },
+    });
+
+    return reminders;
+  }
+
 }

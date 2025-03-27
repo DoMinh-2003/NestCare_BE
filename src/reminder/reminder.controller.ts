@@ -1,6 +1,8 @@
 import {
   Body,
   Controller,
+  Get,
+  Param,
   Post,
   UsePipes,
   ValidationPipe,
@@ -19,7 +21,7 @@ import { CreateReminderDto } from './dto/createReminderDTO';
 @Controller('api/reminders')
 @ApiBearerAuth()
 export class ReminderController {
-  constructor(private readonly reminderService: ReminderService) {}
+  constructor(private readonly reminderService: ReminderService) { }
 
   @Post()
   @ApiOperation({
@@ -31,5 +33,18 @@ export class ReminderController {
   @UsePipes(new ValidationPipe({ whitelist: true }))
   async create(@Body() createReminderDto: CreateReminderDto) {
     return this.reminderService.createReminder(createReminderDto);
+  }
+
+  @Get('mother/:motherId')
+  @ApiOperation({
+    summary: 'Lấy danh sách nhắc nhở của mẹ bầu',
+    description: 'Lấy toàn bộ nhắc nhở của 1 mẹ bầu theo ID',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Danh sách nhắc nhở trả về thành công.',
+  })
+  async getRemindersByMotherId(@Param('motherId') motherId: string) {
+    return this.reminderService.getRemindersByMotherId(motherId);
   }
 }
