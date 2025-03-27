@@ -12,7 +12,7 @@ async function bootstrap() {
   app.enableCors();
   app.useGlobalFilters(new CustomExceptionFilter());
   SwaggerConfig.setupSwagger(app);
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
+  // app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
   initializeFirebaseAdmin(app.get(ConfigService));
 
   // app.useGlobalPipes(new ValidationPipe({
