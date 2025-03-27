@@ -257,13 +257,13 @@ export class AppointmentService {
     //   }
     // }
 
-    let note; 
+    let note;
 
     if (
       AppointmentStatus.CANCELED.toLocaleLowerCase() ===
       status.toLocaleLowerCase()
     ) {
-      note = reason
+      note = reason;
       const date = appointment.appointmentDate;
 
       const motherEmail = appointment.fetalRecords[0].mother.email;
@@ -278,7 +278,7 @@ export class AppointmentService {
       appointment,
       status: status as any,
       changedBy,
-      notes: note
+      notes: note,
     });
     await this.appointmentHistoryRepo.save(appointmentHistory);
 
@@ -426,13 +426,17 @@ export class AppointmentService {
       const fetalRecord = appointment.fetalRecords.find(
         (fr) => fr.id === fetalCheckup.fetalRecordId,
       );
+
       if (!fetalRecord)
         throw new NotFoundException(
           `Fetal record ${fetalCheckup.fetalRecordId} not found in this appointment`,
         );
 
       const existingCheckupRecord = await this.checkupRecordRepo.findOne({
-        where: { appointment, fetalRecord },
+        where: {
+          appointment: { id: appointment.id },
+          fetalRecord: { id: fetalRecord.id },
+        },
       });
 
       if (existingCheckupRecord) {
@@ -462,18 +466,22 @@ export class AppointmentService {
     let totalPrice = 0;
     const medicationBill = this.medicationBillRepo.create({
       appointment,
-      details: [],
+      totalPrice,
     });
+    const savedBill = await this.medicationBillRepo.save(medicationBill);
+    const details: MedicationBillDetail[] = [];
 
     for (const med of medications) {
       const medication = await this.medicationRepo.findOne({
         where: { id: med.medicationId },
       });
+
       if (!medication)
         throw new NotFoundException(`Medication ${med.medicationId} not found`);
 
       const total = medication.price * med.quantity;
       totalPrice += total;
+      console.log(total);
 
       const detail = this.medicationBillDetailRepo.create({
         bill: medicationBill,
@@ -482,13 +490,23 @@ export class AppointmentService {
         price: medication.price,
         total,
       });
+      console.log('tới đây r');
 
-      medicationBill.details.push(detail);
+      details.push(detail);
     }
+    await this.medicationBillDetailRepo.save(details);
+    savedBill.totalPrice = totalPrice;
+    await this.medicationBillRepo.save(savedBill);
 
-    medicationBill.totalPrice = totalPrice;
-    await this.medicationBillRepo.save(medicationBill);
+    console.log('MedicationBill object before save:', medicationBill);
+    console.log('MedicationBill ID before save:', medicationBill.id);
+    try {
+      const bill = await this.medicationBillRepo.save(medicationBill);
+    } catch (error) {
+      console.error('Error saving detail:', error);
 
+      throw error; // Re-throw lỗi để không bỏ sót
+    }
     const appointmentHistory = this.appointmentHistoryRepo.create({
       appointment,
       status: AppointmentStatus.COMPLETED as any,
@@ -513,7 +531,7 @@ export class AppointmentService {
         'appointments.slot',
         'appointments.history',
         'appointments.history.changedBy',
-        'checkupRecords'
+        'checkupRecords',
       ],
     });
 
@@ -537,7 +555,6 @@ export class AppointmentService {
         'history',
         'history.changedBy',
         'slot',
-       
       ],
     });
 
@@ -591,7 +608,6 @@ export class AppointmentService {
         'history',
         'history.changedBy',
         'slot',
-       
       ],
     });
   }
