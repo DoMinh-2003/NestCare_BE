@@ -8,9 +8,13 @@ import { UserPackageServiceUsage } from './model/userPackageServiceUsage.entity'
 import { Appointment } from 'src/appointment/entities/appointment.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Appointment,User,Services,UserPackageServiceUsage])],
+  imports: [TypeOrmModule.forFeature([Appointment, User, Services, UserPackageServiceUsage])],
   providers: [UsersService],
   controllers: [UsersController],
-  exports: [UsersService],
+  exports: [
+    UsersService,
+    TypeOrmModule.forFeature([User]),
+  ],
 })
-export class UsersModule {}
+export class UsersModule { }
+

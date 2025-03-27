@@ -6,22 +6,17 @@ export default class CreateBlogDto {
     categoryId: string,
     description: string,
     content: string,
-    userId: string
   ) {
     this.title = title;
     this.categoryId = categoryId;
     this.description = description;
     this.content = content;
-    this.userId = userId;
   }
 
   @IsNotEmpty()
   @IsString()
   categoryId: string;
 
-  @IsNotEmpty()
-  @IsString()
-  userId: string; // Bắt buộc phải có userId
 
   @IsNotEmpty()
   @IsString()
