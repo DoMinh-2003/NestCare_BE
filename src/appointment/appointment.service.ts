@@ -510,6 +510,10 @@ export class AppointmentService {
         'appointments.appointmentServices',
         'appointments.medicationBills',
         'appointments.fetalRecords', // Cập nhật relations
+        'appointments.slot',
+        'appointments.history',
+        'appointments.history.changedBy',
+        'checkupRecords'
       ],
     });
 
@@ -532,6 +536,8 @@ export class AppointmentService {
         'fetalRecords.mother',
         'history',
         'history.changedBy',
+        'slot',
+       
       ],
     });
 
@@ -583,6 +589,9 @@ export class AppointmentService {
         'medicationBills',
         'fetalRecords.mother',
         'history',
+        'history.changedBy',
+        'slot',
+       
       ],
     });
   }
@@ -614,6 +623,7 @@ export class AppointmentService {
         'fetalRecords.mother',
         'slot',
         'history',
+        'history.changedBy',
       ],
     });
 
