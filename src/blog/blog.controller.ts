@@ -30,10 +30,9 @@ import { CustomHttpException } from 'src/common/exceptions';
 @ApiTags('Blogs')
 @Controller(Api.blog)
 export class BlogsController {
-  constructor(private readonly blogService: BlogsService) {}
+  constructor(private readonly blogService: BlogsService) { }
 
   @ApiBearerAuth()
-  @Public()
   @ApiBody({ type: CreateBlogDto })
   @Post('create')
   async createBlog(@Body() model: CreateBlogDto, @Request() req) {

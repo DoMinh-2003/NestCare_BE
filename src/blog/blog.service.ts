@@ -12,12 +12,15 @@ import {
 } from './dto';
 import { CustomHttpException } from 'src/common/exceptions';
 import { User } from 'src/users/model/user.entity';
+import { Category } from 'src/category/category.entity';
 
 @Injectable()
 export class BlogsService {
   constructor(
     @InjectRepository(Blog)
     private readonly blogRepository: Repository<Blog>,
+    @InjectRepository(Category)
+    private readonly categoryRepository: Repository<Category>,
   ) { }
 
   async createBlog(model: CreateBlogDto, user): Promise<Blog> {
@@ -38,9 +41,18 @@ export class BlogsService {
         `Blog với tiêu đề này: "${model.title}" đã tồn tại`,
       );
     }
+
+    const category = await this.categoryRepository.findOne({
+      where: { id: model.categoryId },
+    });
+
+    if (!category) {
+      throw new CustomHttpException(HttpStatus.NOT_FOUND, 'Category không tồn tại');
+    }
     const newBlog = this.blogRepository.create({
       ...model,
-      user: user,
+      category,
+      user,
     });
     return await this.blogRepository.save(newBlog);
   }
@@ -55,7 +67,10 @@ export class BlogsService {
     console.log(searchCondition);
     const { categoryId, isPublished } = searchCondition;
     const { pageNum, pageSize } = model.pageInfo;
-    const query = this.blogRepository.createQueryBuilder('blog');
+    const query = this.blogRepository.createQueryBuilder('blog')
+      .leftJoinAndSelect('blog.category', 'category')
+      .leftJoinAndSelect('blog.user', 'user');
+
 
     // if (categoryId) {
     //   query.andWhere('blog.categoryId = :categoryId', { categoryId });
@@ -81,8 +96,12 @@ export class BlogsService {
   }
 
   async getBlog(id: string): Promise<Blog | null> {
-    return await this.blogRepository.findOne({ where: { id } });
+    return await this.blogRepository.findOne({
+      where: { id },
+      relations: ['category', 'user'],
+    });
   }
+
 
   async updateBlog(id: string, model: UpdateBlogDto, user): Promise<Blog> {
     if (!model) {
