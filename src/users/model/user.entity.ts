@@ -9,6 +9,7 @@ import { Reminder } from 'src/reminder/entities/reminder.entity';
 import { UserPackageServiceUsage } from './userPackageServiceUsage.entity';
 import { Blog } from 'src/blog/blog.entity';
 import { AppointmentHistory } from 'src/appointment/entities/appointmentHistory.entity';
+import { Comment } from 'src/comments/comment.entity';
 
 @Entity()
 export class User {
@@ -66,6 +67,9 @@ export class User {
 
   @OneToMany(() => AppointmentHistory, (history) => history.changedBy)
   changedAppointmentHistory: AppointmentHistory[];
+
+  @OneToMany(() => Comment, (comment) => comment.user)
+  comments: Comment[];
 
   @BeforeInsert()
   async initializeUserBeforeInsert() {

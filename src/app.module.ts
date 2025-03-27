@@ -23,6 +23,7 @@ import { ReminderModule } from './reminder/reminder.module';
 import { WeekCheckupModule } from './weekCheckupService/weekCheckup.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { SlotModule } from './slots/slot.module';
+import { CommentsModule } from './comments/comments.module';
 
 @Module({
   imports: [
@@ -81,6 +82,7 @@ import { SlotModule } from './slots/slot.module';
     PackagesModule,
     FetalRecordsModule,
     UserPackagesModule,
+    CommentsModule,
   ],
   controllers: [AppController],
   providers: [

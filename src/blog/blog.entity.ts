@@ -1,4 +1,5 @@
 import { Category } from 'src/category/category.entity';
+import { Comment } from 'src/comments/comment.entity';
 import { User } from 'src/users/model/user.entity';
 import {
   Entity,
@@ -9,6 +10,7 @@ import {
   PrimaryGeneratedColumn,
   OneToOne,
   JoinColumn,
+  OneToMany,
 } from 'typeorm';
 
 @Entity()
@@ -41,4 +43,7 @@ export class Blog {
   @ManyToOne(() => User, (user) => user.blogs, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
   user: User;
+
+  @OneToMany(() => Comment, (comment) => comment.blog)
+  comments: Comment[];
 }
