@@ -101,6 +101,8 @@ export class AppointmentController {
     @Request() req: any
   ) {
     const changedBy = req.user
+    
+
 
     return this.appointmentService.completeCheckup(
       appointmentId,
