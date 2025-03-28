@@ -130,6 +130,22 @@ export class AppointmentService {
             `Fetal record with ID ${fetalRecordData.fetalRecordId} not found`,
           );
         }
+
+        // Check if this fetal record already has an appointment at the given date and slot
+        const existingFetalAppointment = await this.appointmentRepo.findOne({
+          where: {
+            fetalRecords: { id: fetalRecord.id },
+            appointmentDate: new Date(date),
+            slot: { id: slotId },
+          },
+        });
+
+        if (existingFetalAppointment) {
+          throw new BadRequestException(
+            `Thai nhi ${fetalRecord.name} đã có lịch hẹn vào ngày và giờ này.`,
+          );
+        }
+
         return fetalRecord;
       }),
     );
