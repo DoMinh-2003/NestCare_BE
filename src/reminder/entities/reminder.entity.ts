@@ -27,6 +27,9 @@ export class Reminder {
   @Column({ type: 'boolean', default: false })
   isSent: boolean; // Kiểm soát gửi thông báo
 
+  @ManyToOne(() => User, (user) => user.remindersForDoctor, { eager: true })
+  doctor: User;
+
   @CreateDateColumn()
   createdAt: Date;
 

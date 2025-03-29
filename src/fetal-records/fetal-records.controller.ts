@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Put } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Put, Req } from '@nestjs/common';
 import { FetalRecordsService } from './fetal-records.service';
 import { CreateFetalRecordDto } from './dto/create-fetal-record.dto';
 import { UpdateFetalRecordDto } from './dto/update-fetal-record.dto';
@@ -10,7 +10,7 @@ import { CreateCheckupRecordDto } from './dto/create-checkup-record.dto';
 @Controller(Api.fetalRecord)
 @ApiBearerAuth()
 export class FetalRecordsController {
-  constructor(private readonly fetalRecordsService: FetalRecordsService) {}
+  constructor(private readonly fetalRecordsService: FetalRecordsService) { }
 
   @ApiBody({ type: CreateFetalRecordDto })
   @Post()
@@ -18,8 +18,10 @@ export class FetalRecordsController {
     return await this.fetalRecordsService.create(createFetalRecordDto);
   }
 
-  @Get('/user/:userId')
-  async findAll(@Param('userId') userId: string) {
+
+  @Get()
+  async findAll(@Req() req: Request) {
+    const userId = (req as any).user?.id;
     return await this.fetalRecordsService.findAllByUserId(userId);
   }
 

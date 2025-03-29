@@ -55,6 +55,9 @@ export class User {
   @OneToMany(() => Appointment, (appointment) => appointment.doctor)
   appointments: Appointment[]; // Mối quan hệ với bảng FetalRecord
 
+  @OneToMany(() => Reminder, (reminder) => reminder.doctor)
+  remindersForDoctor: Reminder[];
+
   @OneToMany(() => Reminder, (reminder) => reminder.mother)
   reminders: Reminder[]; // Mối quan hệ với bảng FetalRecord
 
