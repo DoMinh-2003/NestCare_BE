@@ -638,37 +638,78 @@ export class AppointmentService {
     });
   }
 
-  async getDoctorAppointmentsByDate(
+  async getDoctorAppointmentsByDateWithSearch(
     doctorId: string,
     date: Date,
-    status: AppointmentStatus,
+    search?: string,
+    status?: AppointmentStatus,
   ): Promise<Appointment[]> {
     const startOfDay = new Date(date);
     startOfDay.setHours(0, 0, 0, 0);
     const endOfDay = new Date(date);
     endOfDay.setHours(23, 59, 59, 999);
 
-    const whereClause: any = {
-      doctor: { id: doctorId },
-      appointmentDate: Between(startOfDay, endOfDay),
-      status,
-    };
+    const queryBuilder = this.appointmentRepo.createQueryBuilder('appointment')
+    .leftJoinAndSelect('appointment.fetalRecords', 'fetalRecord')
+    .leftJoinAndSelect('fetalRecord.checkupRecords', 'checkupRecord')
+    .leftJoinAndSelect('appointment.doctor', 'doctor')
+    .leftJoinAndSelect('appointment.appointmentServices', 'appointmentServices')
+    .leftJoinAndSelect('appointment.medicationBills', 'medicationBills')
+    .leftJoinAndSelect('fetalRecord.mother', 'mother') // Join với bảng thông tin mẹ
+    .leftJoinAndSelect('appointment.slot', 'slot')
+    .leftJoinAndSelect('appointment.history', 'history')
+    .leftJoinAndSelect('history.changedBy', 'changedBy')
+    .where('appointment.doctor.id = :doctorId', { doctorId })
+    .andWhere('appointment.appointmentDate BETWEEN :startOfDay AND :endOfDay', { startOfDay, endOfDay });
 
-    const appointments = await this.appointmentRepo.find({
-      where: whereClause,
-      relations: [
-        'fetalRecords',
-        'fetalRecords.checkupRecords',
-        'doctor',
-        'appointmentServices',
-        'medicationBills',
-        'fetalRecords.mother',
-        'slot',
-        'history',
-        'history.changedBy',
-      ],
-    });
+  if (status) {
+    queryBuilder.andWhere('appointment.status = :status', { status });
+  }
 
-    return appointments;
+  if (search) {
+    queryBuilder.andWhere(
+      '(mother.fullName LIKE :search OR mother.phone LIKE :search OR mother.email LIKE :search)',
+      { search: `%${search}%` },
+    );
+  }
+
+  return queryBuilder.getMany();
+  }
+
+
+  async getAllAppointmentsByDateWithSearch(
+    date: Date,
+    search?: string,
+    status?: AppointmentStatus,
+  ): Promise<Appointment[]> {
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const queryBuilder = this.appointmentRepo.createQueryBuilder('appointment')
+      .leftJoinAndSelect('appointment.fetalRecords', 'fetalRecord')
+      .leftJoinAndSelect('fetalRecord.checkupRecords', 'checkupRecord')
+      .leftJoinAndSelect('appointment.doctor', 'doctor')
+      .leftJoinAndSelect('appointment.appointmentServices', 'appointmentServices')
+      .leftJoinAndSelect('appointment.medicationBills', 'medicationBills')
+      .leftJoinAndSelect('fetalRecord.mother', 'mother')
+      .leftJoinAndSelect('appointment.slot', 'slot')
+      .leftJoinAndSelect('appointment.history', 'history')
+      .leftJoinAndSelect('history.changedBy', 'changedBy')
+      .where('appointment.appointmentDate BETWEEN :startOfDay AND :endOfDay', { startOfDay, endOfDay });
+
+    if (status) {
+      queryBuilder.andWhere('appointment.status = :status', { status });
+    }
+
+    if (search) {
+      queryBuilder.andWhere(
+        '(mother.fullName LIKE :search OR mother.phone LIKE :search OR mother.email LIKE :search)',
+        { search: `%${search}%` },
+      );
+    }
+
+    return queryBuilder.getMany();
   }
 }
