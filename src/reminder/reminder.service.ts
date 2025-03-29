@@ -129,13 +129,14 @@ export class ReminderService {
     return reminders;
   }
 
-  async getRemindersCreatedByDoctor(doctorId: string) {
+  async getRemindersCreatedByDoctor(doctorId: string, motherId: string) {
     const doctor = await this.userRepository.findOne({ where: { id: doctorId } });
+    console.log(motherId)
 
     if (!doctor) throw new NotFoundException('Bác sĩ không tồn tại.');
 
     return this.reminderRepository.find({
-      where: { doctor: { id: doctorId } },
+      where: { doctor: { id: doctorId }, mother: { id: motherId } },
       relations: ['mother', 'doctor'],
       order: { startDate: 'DESC' },
     });

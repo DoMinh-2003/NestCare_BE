@@ -15,9 +15,11 @@ import {
   ApiOperation,
   ApiResponse,
   ApiBearerAuth,
+  ApiParam,
 } from '@nestjs/swagger';
 import { ReminderService } from './reminder.service';
 import { CreateReminderDto } from './dto/createReminderDTO';
+import { console } from 'inspector';
 
 @ApiTags('Reminders')
 @Controller('api/reminders')
@@ -52,10 +54,15 @@ export class ReminderController {
     return this.reminderService.getRemindersByMotherId(motherId);
   }
 
-  @Get('/by-doctor')
-  async getMyReminders(@Req() req: Request) {
+  @Get('/by-doctor/:motherId')
+  @ApiParam({
+    name: 'motherId',
+    description: 'Trạng thái của Appointments',
+  })
+  async getMyReminders(@Req() req: Request, @Param('motherId') motherId: string) {
     const doctorId = (req as any).user.id;
-    return this.reminderService.getRemindersCreatedByDoctor(doctorId);
+    console.log(motherId)
+    return this.reminderService.getRemindersCreatedByDoctor(doctorId, motherId);
   }
 
 }
