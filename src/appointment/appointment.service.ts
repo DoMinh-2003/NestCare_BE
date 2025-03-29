@@ -408,6 +408,7 @@ export class AppointmentService {
     const newAppointment = await this.appointmentRepo.save(appointment);
 
     if (totalCost > 0) {
+      totalCost *= 100
       const param = `?appointmentId=${newAppointment.id}`;
       return await this.vnpayService.createPayment(
         newAppointment.id,
@@ -542,6 +543,7 @@ export class AppointmentService {
         'appointments',
         'appointments.doctor',
         'appointments.appointmentServices',
+        'appointments.appointmentServices.service',
         'appointments.medicationBills',
         'appointments.fetalRecords', // Cập nhật relations
         'appointments.slot',
@@ -566,6 +568,7 @@ export class AppointmentService {
         'fetalRecords.checkupRecords',
         'doctor',
         'appointmentServices',
+        'appointmentServices.service',
         'medicationBills',
         'fetalRecords.mother',
         'history',
