@@ -42,10 +42,15 @@ export class FetalRecordsService {
 
   // Lấy tất cả hồ sơ thai nhi của một người mẹ (user)
   async findAllByUserId(userId: string): Promise<FetalRecord[]> {
-    console.log(userId);
     return await this.fetalRecordRepository.find({
-      where: { mother: { id: userId }, isDeleted: 0 }, // Kiểm tra isDeleted = 0 để chỉ lấy các hồ sơ chưa bị xóa
-      relations: ['checkupRecords', 'checkupRecords.appointment', 'appointments', 'mother']
+      where: { mother: { id: userId }, isDeleted: 0 },
+      relations: [
+        'checkupRecords',
+        'checkupRecords.appointment',
+        'appointments',
+        'appointments.doctor',
+        'mother'
+      ]
     });
   }
 
