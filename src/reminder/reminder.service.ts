@@ -25,16 +25,20 @@ export class ReminderService {
     private readonly mailService: MailService, // Inject MailService để gửi email
   ) { }
 
-  async createReminder(reminderDto: CreateReminderDto) {
+  async createReminder(reminderDto: CreateReminderDto, doctorId: string) {
     // ✅ Tìm user theo ID (mẹ bầu)
     const mother = await this.userRepository.findOne({
       where: { id: reminderDto.motherId },
     });
-    if (!mother) {
-      throw new NotFoundException('Mẹ bầu không tồn tại.');
+    const doctor = await this.userRepository.findOne({
+      where: { id: doctorId },
+    });
+
+    if (!mother || !doctor) {
+      throw new NotFoundException('Mẹ bầu hoặc bác sĩ không tồn tại.');
     }
 
-    const reminder = this.reminderRepository.create({ ...reminderDto, mother });
+    const reminder = this.reminderRepository.create({ ...reminderDto, mother, doctor });
     const savedReminder = await this.reminderRepository.save(reminder); // Đảm bảo chỉ lưu 1 object
 
     this.scheduleDailyReminder(savedReminder); // Lên lịch gửi email
@@ -124,5 +128,18 @@ export class ReminderService {
 
     return reminders;
   }
+
+  async getRemindersCreatedByDoctor(doctorId: string) {
+    const doctor = await this.userRepository.findOne({ where: { id: doctorId } });
+
+    if (!doctor) throw new NotFoundException('Bác sĩ không tồn tại.');
+
+    return this.reminderRepository.find({
+      where: { doctor: { id: doctorId } },
+      relations: ['mother', 'doctor'],
+      order: { startDate: 'DESC' },
+    });
+  }
+
 
 }
