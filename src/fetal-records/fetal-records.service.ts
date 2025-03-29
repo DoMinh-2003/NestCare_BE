@@ -14,37 +14,38 @@ export class FetalRecordsService {
     @InjectRepository(FetalRecord)
     private readonly fetalRecordRepository: Repository<FetalRecord>,
 
-      @InjectRepository(User)
-        private readonly userRepository: Repository<User>,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
 
-        @InjectRepository(CheckupRecord)
-        private readonly checkupRecordRepo: Repository<CheckupRecord>,
-        
-  ) {}
+    @InjectRepository(CheckupRecord)
+    private readonly checkupRecordRepo: Repository<CheckupRecord>,
+
+  ) { }
 
   // Thêm hồ sơ thai nhi
   async create(createFetalRecordDto: CreateFetalRecordDto): Promise<FetalRecord> {
-    const { motherId: userId, ...otherFields } = createFetalRecordDto;  
+    const { motherId: userId, ...otherFields } = createFetalRecordDto;
     // Find the User entity from the provided user_id
-    const mother = await this.userRepository.findOne({where: { id: userId}});
-  
+    const mother = await this.userRepository.findOne({ where: { id: userId } });
+
     if (!mother) {
       throw new Error('Mother (User) not found');
     }
-  
+
     const fetalRecord = this.fetalRecordRepository.create({
       ...otherFields,
       mother, // Associate the User entity with the fetal record
     });
-  
+
     return await this.fetalRecordRepository.save(fetalRecord);
   }
 
   // Lấy tất cả hồ sơ thai nhi của một người mẹ (user)
   async findAllByUserId(userId: string): Promise<FetalRecord[]> {
+    console.log(userId);
     return await this.fetalRecordRepository.find({
       where: { mother: { id: userId }, isDeleted: 0 }, // Kiểm tra isDeleted = 0 để chỉ lấy các hồ sơ chưa bị xóa
-      relations: ['checkupRecords','checkupRecords.appointment','appointments', 'mother']
+      relations: ['checkupRecords', 'checkupRecords.appointment', 'appointments', 'mother']
     });
   }
 
@@ -52,7 +53,7 @@ export class FetalRecordsService {
   async findById(idFetal: string) {
     const fetalRecord = await this.fetalRecordRepository.findOne({
       where: { id: idFetal, isDeleted: 0 }, // Chỉ định điều kiện tìm theo id
-      relations: ['checkupRecords','checkupRecords.appointment','appointments', 'mother']
+      relations: ['checkupRecords', 'checkupRecords.appointment', 'appointments', 'mother']
     });
 
     if (!fetalRecord) {
