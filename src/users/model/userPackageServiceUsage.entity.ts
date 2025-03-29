@@ -8,7 +8,7 @@ import {
   import { User } from 'src/users/model/user.entity';
 import { Services } from 'src/services/services.entity';
   
-  @Entity()
+@Entity('user_package_service_usages')
   export class UserPackageServiceUsage {
     @PrimaryGeneratedColumn('uuid')
     id: string;

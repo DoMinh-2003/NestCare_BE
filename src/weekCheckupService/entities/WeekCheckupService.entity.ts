@@ -7,7 +7,7 @@ import {
   } from 'typeorm';
   import { Services } from 'src/services/services.entity';
   
-  @Entity()
+  @Entity('week_checkup_services')
   export class WeekCheckupServiceEntity {
     @PrimaryGeneratedColumn('uuid')
     id: string;
@@ -22,7 +22,11 @@ import {
     description: string; // Mô tả chi tiết
   
     @ManyToMany(() => Services)
-    @JoinTable()
+    @JoinTable({
+      name: 'week_checkup_service_mappings', // Đặt tên bảng trung gian
+      joinColumn: { name: 'week_checkup_service_id', referencedColumnName: 'id' },
+      inverseJoinColumn: { name: 'service_id', referencedColumnName: 'id' },
+    })
     services: Services[]; // Các dịch vụ cần thực hiện trong tuần đó
   }
   

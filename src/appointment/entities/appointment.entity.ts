@@ -25,13 +25,13 @@ export enum AppointmentStatus {
   FAIL = 'FAIL', // 
 }
 
-@Entity()
+@Entity('appointments')
 export class Appointment {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @ManyToMany(() => FetalRecord, (fetalRecord) => fetalRecord.appointments)
-  @JoinTable()
+  @JoinTable({ name: 'appointment_fetal_records' })
   fetalRecords: FetalRecord[];
 
   @ManyToOne(() => User, (doctor) => doctor.appointments)
