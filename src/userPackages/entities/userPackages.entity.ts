@@ -19,7 +19,7 @@ export enum UserPackageStatus {
   CANCELED = 'CANCELED', // Đã hủy
 }
 
-@Entity()
+@Entity('orders')
 export class UserPackages {
   @PrimaryGeneratedColumn('uuid')
   id: string;

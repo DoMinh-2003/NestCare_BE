@@ -2,7 +2,7 @@ import { Entity, PrimaryGeneratedColumn, ManyToOne, Column } from 'typeorm';
 import { Appointment } from './appointment.entity';
 import { Services } from 'src/services/services.entity';
 
-@Entity()
+@Entity('appointment_services')
 export class AppointmentServiceEntity {
 
   @PrimaryGeneratedColumn('uuid')
