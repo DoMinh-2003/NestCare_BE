@@ -17,6 +17,7 @@ export class AppointmentServiceEntity {
   @Column('decimal', { precision: 10, scale: 2 })
   price: number; // Giá dịch vụ tại thời điểm khám
 
+  @Column()
   isInPackage: boolean;
 
   @Column({ nullable: true })
