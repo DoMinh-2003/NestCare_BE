@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Between, MoreThan, Repository } from 'typeorm';
 import { User } from './model/user.entity';
@@ -17,14 +17,14 @@ export class UsersService {
     private readonly userRepository: Repository<User>,
 
 
-       @InjectRepository(UserPackageServiceUsage)
-        private userPackageServiceUsageRepository: Repository<UserPackageServiceUsage>,
+    @InjectRepository(UserPackageServiceUsage)
+    private userPackageServiceUsageRepository: Repository<UserPackageServiceUsage>,
 
-        @InjectRepository(Appointment)
-        private appointmentRepo: Repository<Appointment>,
+    @InjectRepository(Appointment)
+    private appointmentRepo: Repository<Appointment>,
 
-        
-  ) {}
+
+  ) { }
 
   async findAll(): Promise<User[]> {
     return this.userRepository.find();
@@ -34,25 +34,40 @@ export class UsersService {
   // Hàm đăng ký người dùng
   async registerUser(registerUserDto: RegisterUserDto): Promise<User> {
     const { username, email, password, fullName, phone, role, image } = registerUserDto;
-    // const user = new User();
-    // user.username = username;
-    // user.email = email;
-    // user.password = password;
-    // user.fullName = fullName;
-    // user.phone = phone;
-    // user.role = role;
-    // user.image = image;
 
+    // Kiểm tra nếu username đã tồn tại
+    const existingUserByUsername = await this.userRepository.findOne({ where: { username } });
+    if (existingUserByUsername) {
+      throw new ConflictException('Tên đăng nhập đã tồn tại');
+    }
+
+    // Kiểm tra nếu email đã tồn tại
+    const existingUserByEmail = await this.userRepository.findOne({ where: { email } });
+    if (existingUserByEmail) {
+      throw new ConflictException('Email đã tồn tại');
+    }
+
+    // Kiểm tra nếu phone đã tồn tại
+    const existingUserByPhone = await this.userRepository.findOne({ where: { phone } });
+    if (existingUserByPhone) {
+      throw new ConflictException('Số điện thoại đã tồn tại');
+    }
+
+    // Nếu không có trùng lặp, tạo mới người dùng
     const newUser = this.userRepository.create({
-      username : username,
-     email : email,
-      password : password,
-      fullName : fullName,
-      phone : phone,
-      role : role,
-      image : image
+      username,
+      email,
+      password,
+      fullName,
+      phone,
+      role,
+      image,
     });
-    const savedUser = this.userRepository.save(newUser);
+
+    // Lưu người dùng vào cơ sở dữ liệu
+    const savedUser = await this.userRepository.save(newUser);
+
+    // Trả về người dùng đã lưu
     return savedUser instanceof Array ? savedUser[0] : savedUser;
   }
 
@@ -64,7 +79,7 @@ export class UsersService {
   // Hàm tìm người dùng theo ID
 
   async findOne(id: string): Promise<User> {
-    const user = await this.userRepository.findOne({where: {id: id}});
+    const user = await this.userRepository.findOne({ where: { id: id } });
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
@@ -82,17 +97,17 @@ export class UsersService {
     throw new Error('User not found');
   }
 
- // Hàm toggle trạng thái isDeleted
- async toggleDeleteStatus(id: string, isDeleted: boolean): Promise<void> {
-  const user = await this.userRepository.findOne({ where: { id } });
+  // Hàm toggle trạng thái isDeleted
+  async toggleDeleteStatus(id: string, isDeleted: boolean): Promise<void> {
+    const user = await this.userRepository.findOne({ where: { id } });
 
-  if (!user) {
-    throw new NotFoundException(`User with ID ${id} not found`);
+    if (!user) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+
+    user.isDeleted = isDeleted; // Cập nhật trạng thái isDeleted
+    await this.userRepository.save(user); // Lưu thay đổi vào cơ sở dữ liệu
   }
-
-  user.isDeleted = isDeleted; // Cập nhật trạng thái isDeleted
-  await this.userRepository.save(user); // Lưu thay đổi vào cơ sở dữ liệu
-}
 
   async validateUser(username: string, password: string): Promise<User | null> {
     const user = await this.userRepository.findOne({
@@ -131,12 +146,12 @@ export class UsersService {
   async searchUsers(pageNum: number, pageSize: number, query?: string, role?: Role) {
     const qb = this.userRepository.createQueryBuilder('user')
       .where('user.isDeleted = :isDeleted', { isDeleted: false });
-  
+
     // Nếu có role thì lọc theo role
     if (role) {
       qb.andWhere('user.role = :role', { role });
     }
-  
+
     // Nếu có query thì tìm theo tên, email, hoặc số điện thoại
     if (query && query.trim() !== '') {
       qb.andWhere(
@@ -150,11 +165,11 @@ export class UsersService {
         }
       );
     }
-  
+
     qb.skip((pageNum - 1) * pageSize).take(pageSize);
-  
+
     const [users, total] = await qb.getManyAndCount();
-  
+
     return {
       users,
       total,
@@ -163,7 +178,7 @@ export class UsersService {
       totalPages: Math.ceil(total / pageSize),
     };
   }
-  
+
 
 
   async getAvailableServices(userId: string) {
@@ -178,7 +193,7 @@ export class UsersService {
 
     return services;
   }
-  
+
 
   async getAvailableDoctors(date: Date, slotId: string): Promise<User[]> {
     const startOfDay = new Date(date);
@@ -188,7 +203,7 @@ export class UsersService {
 
     // 1. Lấy tất cả các bác sĩ
     const allDoctors = await this.userRepository.find({ where: { role: Role.Doctor, isDeleted: false } });
-   
+
 
     // 2. Lấy tất cả các cuộc hẹn đã được đặt trong ngày và khung giờ cụ thể
     const bookedAppointments = await this.appointmentRepo.find({
@@ -205,6 +220,6 @@ export class UsersService {
 
     return availableDoctors;
   }
-  
-  
+
+
 }

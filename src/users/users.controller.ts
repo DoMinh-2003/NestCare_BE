@@ -32,7 +32,7 @@ import { Public } from 'src/auth/decorators/public.decorator';
 @ApiTags('Users')
 @Controller('api/users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(private readonly usersService: UsersService) { }
 
   @Get()
   // @Roles(Role.Admin)
@@ -40,6 +40,7 @@ export class UsersController {
     return this.usersService.findAll();
   }
 
+  @Public()
   @Post('register')
   @ApiResponse({ status: 201, description: 'User successfully registered' })
   @ApiResponse({ status: 400, description: 'Invalid input data' })
