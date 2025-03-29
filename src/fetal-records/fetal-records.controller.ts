@@ -20,9 +20,14 @@ export class FetalRecordsController {
 
 
   @Get()
-  async findAll(@Req() req: Request) {
+  async findAllByMother(@Req() req: Request) {
     const userId = (req as any).user?.id;
     return await this.fetalRecordsService.findAllByUserId(userId);
+  }
+
+  @Get('/:motherId')
+  async findAll(@Param() motherId: string) {
+    return await this.fetalRecordsService.findAllByUserId(motherId);
   }
 
 
