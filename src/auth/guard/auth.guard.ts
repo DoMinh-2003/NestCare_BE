@@ -10,6 +10,7 @@ import { Request } from 'express';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 import { ConfigService } from '@nestjs/config';
 import { UsersService } from 'src/users/users.service';
+import { TokenExpiredError } from 'jsonwebtoken';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -18,7 +19,7 @@ export class AuthGuard implements CanActivate {
     private reflector: Reflector,
     private config: ConfigService,
     private usersService: UsersService,
-  ) {}
+  ) { }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
@@ -26,7 +27,6 @@ export class AuthGuard implements CanActivate {
       context.getClass(),
     ]);
     if (isPublic) {
-      // 💡 See this condition
       return true;
     }
 
@@ -35,24 +35,25 @@ export class AuthGuard implements CanActivate {
     if (!token) {
       throw new UnauthorizedException('Token is missing');
     }
+
     try {
       const payload = await this.jwtService.verifyAsync(token, {
         secret: this.config.get<string>('JWT_SECRET'),
       });
-      // 💡 We're assigning the payload to the request object here
-      // so that we can access it in our route handlers
-      console.log(payload);
 
       const user = await this.usersService.findOne(payload.id);
-
       if (!user) {
         throw new UnauthorizedException('Invalid user.');
       }
 
       request['user'] = user;
-    } catch {
+    } catch (error) {
+      if (error instanceof TokenExpiredError) {
+        throw new UnauthorizedException('Token is expired');
+      }
       throw new UnauthorizedException('Invalid token');
     }
+
     return true;
   }
 
