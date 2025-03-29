@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, Put, Req } from '@ne
 import { FetalRecordsService } from './fetal-records.service';
 import { CreateFetalRecordDto } from './dto/create-fetal-record.dto';
 import { UpdateFetalRecordDto } from './dto/update-fetal-record.dto';
-import { ApiBearerAuth, ApiBody, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiParam, ApiTags } from '@nestjs/swagger';
 import { Api } from 'src/common/api';
 import { CreateCheckupRecordDto } from './dto/create-checkup-record.dto';
 
@@ -22,11 +22,16 @@ export class FetalRecordsController {
   @Get()
   async findAllByMother(@Req() req: Request) {
     const userId = (req as any).user?.id;
+    console.log(userId);
     return await this.fetalRecordsService.findAllByUserId(userId);
   }
 
   @Get('/:motherId')
-  async findAll(@Param() motherId: string) {
+  @ApiParam({
+    name: 'motherId',
+    description: 'Trạng thái của Appointments',
+  })
+  async findAll(@Param('motherId') motherId: string) {
     return await this.fetalRecordsService.findAllByUserId(motherId);
   }
 
