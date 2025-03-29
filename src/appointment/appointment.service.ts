@@ -94,6 +94,11 @@ export class AppointmentService {
     const slot = await this.slotRepo.findOne({ where: { id: slotId } });
     if (!slot) throw new NotFoundException('Slot not found');
 
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+
     const now = new Date();
     const requestedDateTime = new Date(date);
 
@@ -109,7 +114,7 @@ export class AppointmentService {
     const existingAppointment = await this.appointmentRepo.findOne({
       where: {
         doctor: { id: doctorId },
-        appointmentDate: new Date(date), // Compare only the date part for existing appointments
+        appointmentDate: Between(startOfDay, endOfDay), // Compare only the date part for existing appointments
         slot: { id: slotId },
       },
     });
@@ -135,10 +140,12 @@ export class AppointmentService {
         const existingFetalAppointment = await this.appointmentRepo.findOne({
           where: {
             fetalRecords: { id: fetalRecord.id },
-            appointmentDate: new Date(date),
+            appointmentDate: Between(startOfDay, endOfDay),
             slot: { id: slotId },
           },
         });
+
+    
 
         if (existingFetalAppointment) {
           throw new BadRequestException(
