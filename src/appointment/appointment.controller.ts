@@ -170,9 +170,9 @@ export class AppointmentController {
   }
 
 
-  @Get('doctor-date/:doctorId/:date/:status')
+  @Get('doctor-date/:doctorId/:date')
   @ApiOperation({
-    summary: 'Lấy tất cả cuộc hẹn của bác sĩ theo ngày và trạng thái (tùy chọn)',
+    summary: 'Lấy tất cả cuộc hẹn của bác sĩ theo ngày và tìm kiếm (tùy chọn)',
   })
   @ApiParam({
     name: 'doctorId',
@@ -184,28 +184,76 @@ export class AppointmentController {
     description: 'Ngày của cuộc hẹn (YYYY-MM-DD)',
     type: 'string',
   })
-  @ApiParam({
+  @ApiQuery({
+    name: 'search',
+    description: 'Tìm kiếm theo tên, số điện thoại hoặc email của mẹ',
+    required: false,
+    type: 'string',
+    example: 'Nguyen Van A',
+  })
+  @ApiQuery({
     name: 'status',
     description: 'Trạng thái của Appointments',
-    enum: AppointmentStatus, // Đây là enum bạn muốn sử dụng
+    required: false,
+    enum: AppointmentStatus,
   })
-  async getDoctorAppointmentsByDate(
+  async getDoctorAppointmentsByDateWithSearch(
     @Param('doctorId') doctorId: string,
     @Param('date') dateString: string,
-    @Param('status') status: AppointmentStatus, // Cho phép null hoặc undefined
+    @Query('search') search?: string,
+    @Query('status') status?: AppointmentStatus,
   ) {
     const date = new Date(dateString);
     if (isNaN(date.getTime())) {
       throw new BadRequestException('Invalid date format. Please use YYYY-MM-DD.');
     }
 
-    return this.appointmentService.getDoctorAppointmentsByDate(
+    return this.appointmentService.getDoctorAppointmentsByDateWithSearch(
       doctorId,
       date,
+      search,
       status,
     );
   }
 
+  @Get('date/:date')
+  @ApiOperation({
+    summary: 'Lấy tất cả cuộc hẹn theo ngày và tìm kiếm (tùy chọn)',
+  })
+  @ApiParam({
+    name: 'date',
+    description: 'Ngày của cuộc hẹn (YYYY-MM-DD)',
+    type: 'string',
+  })
+  @ApiQuery({
+    name: 'search',
+    description: 'Tìm kiếm theo tên, số điện thoại hoặc email của mẹ',
+    required: false,
+    type: 'string',
+    example: 'Nguyen Van A',
+  })
+  @ApiQuery({
+    name: 'status',
+    description: 'Trạng thái của Appointments',
+    required: false,
+    enum: AppointmentStatus,
+  })
+  async getAllAppointmentsByDateWithSearch(
+    @Param('date') dateString: string,
+    @Query('search') search?: string,
+    @Query('status') status?: AppointmentStatus,
+  ) {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      throw new BadRequestException('Invalid date format. Please use YYYY-MM-DD.');
+    }
+
+    return this.appointmentService.getAllAppointmentsByDateWithSearch(
+      date,
+      search,
+      status,
+    );
+  }
 
 
 }
