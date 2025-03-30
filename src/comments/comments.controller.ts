@@ -2,7 +2,9 @@ import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/commo
 import { CommentsService } from './comments.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Comment } from './comment.entity';
+import { Public } from 'src/auth/decorators/public.decorator';
 
 @ApiTags('comments')
 @Controller('comments')
@@ -16,6 +18,15 @@ export class CommentsController {
   async createComment(@Body() createCommentDto: CreateCommentDto) {
     const comment = await this.commentsService.createComment(createCommentDto);
     return { success: true, data: comment };
+  }
+
+  @Public()
+  @Get('blog/:blogId')
+  @ApiOperation({ summary: 'Lấy danh sách bình luận theo Blog ID' })
+  @ApiParam({ name: 'blogId', description: 'ID của blog', example: '663a09a9c7a5420020c1249b' })
+  @ApiResponse({ status: 200, description: 'Danh sách bình luận được trả về', type: [Comment] })
+  async getCommentsByBlogId(@Param('blogId') blogId: string): Promise<Comment[]> {
+    return this.commentsService.getCommentsByBlogId(blogId);
   }
 
   @Get()
