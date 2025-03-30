@@ -60,7 +60,6 @@ export default class CreatePackageDto {
   })
   @IsOptional()
   @IsInt()
-
   durationValue?: number;
 
   @ApiProperty({

@@ -7,6 +7,7 @@ import { Packages } from 'src/packages/entity/package.entity';
 import { User } from 'src/users/model/user.entity';
 import { VnpayService } from 'src/common/service/vnpay.service';
 import { UserPackageServiceUsage } from 'src/users/model/userPackageServiceUsage.entity';
+import { MailService } from 'src/common/service/mail.service';
 
 
 @Module({
@@ -14,6 +15,6 @@ import { UserPackageServiceUsage } from 'src/users/model/userPackageServiceUsage
     TypeOrmModule.forFeature([UserPackageServiceUsage, UserPackages, Packages , User, UserPackageServiceUsage]),
   ],
   controllers: [UserPackagesController],
-  providers: [UserPackagesService, VnpayService],
+  providers: [UserPackagesService, VnpayService, MailService],
 })
 export class UserPackagesModule {}
