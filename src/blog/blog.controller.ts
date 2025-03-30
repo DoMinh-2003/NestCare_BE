@@ -42,7 +42,7 @@ export class BlogsController {
   }
 
   @Public()
-  @ApiBody({ type: SearchBlogDto })
+  @ApiBody({ type: SearchWithPaginationDto })
   @HttpCode(HttpStatus.OK)
   @Post('search')
   async getBlogs(@Body() model: SearchWithPaginationDto) {

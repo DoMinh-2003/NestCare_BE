@@ -64,24 +64,26 @@ export class BlogsService {
       ...new SearchBlogDto(),
       ...model.searchCondition,
     };
-    console.log(searchCondition);
-    const { categoryId, isPublished } = searchCondition;
+    const { categoryId, isPublished, authorId } = searchCondition;
     const { pageNum, pageSize } = model.pageInfo;
+
     const query = this.blogRepository.createQueryBuilder('blog')
       .leftJoinAndSelect('blog.category', 'category')
       .leftJoinAndSelect('blog.user', 'user');
 
+    if (categoryId) {
+      query.andWhere('blog.categoryId = :categoryId', { categoryId });
+    }
 
-    // if (categoryId) {
-    //   query.andWhere('blog.categoryId = :categoryId', { categoryId });
-    // }
+    if (authorId) {
+      query.andWhere('blog.userId = :authorId', { authorId });
+    }
 
-    query.andWhere('blog.isPublished = :isPublished', {
-      isPublished,
-    });
+    if (typeof isPublished === 'number') {
+      query.andWhere('blog.isPublished = :isPublished', { isPublished });
+    }
 
     query.orderBy('blog.createdAt', 'DESC');
-
     query.skip((pageNum - 1) * pageSize).take(pageSize);
 
     const [blogs, total] = await query.getManyAndCount();
@@ -92,8 +94,10 @@ export class BlogsService {
       totalItems: total,
       totalPages: 0,
     });
+
     return result;
   }
+
 
   async getBlog(id: string): Promise<Blog | null> {
     return await this.blogRepository.findOne({

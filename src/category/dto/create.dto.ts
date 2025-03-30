@@ -1,3 +1,4 @@
+import { ApiProperty } from '@nestjs/swagger';
 import {
   IsNotEmpty,
   IsString,
@@ -21,10 +22,18 @@ export default class CreateCategoryDto {
     this.isDeleted = isDeleted;
   }
 
+  @ApiProperty({
+    example: 'Sinh con',
+    description: 'Nội dung chi tiết của bài blog',
+  })
   @IsNotEmpty()
   @IsString()
   name: string;
 
+  @ApiProperty({
+    example: 'Sinh con đang phát triển.',
+    description: 'Mô tả chi tiết của bài blog',
+  })
   @IsOptional()
   @IsString()
   description?: string;

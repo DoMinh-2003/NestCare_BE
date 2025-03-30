@@ -1,5 +1,6 @@
 import { IsInt, Min } from 'class-validator';
 import { PAGINATION } from '../constants';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class PaginationRequestModel {
   constructor(
@@ -11,10 +12,12 @@ export class PaginationRequestModel {
   }
 
   @IsInt()
+  @ApiProperty({ example: 1 })
   @Min(PAGINATION.pageNum)
   public pageNum: number;
 
   @IsInt()
+  @ApiProperty({ example: 10 })
   @Min(PAGINATION.pageNum)
   public pageSize: number;
 }

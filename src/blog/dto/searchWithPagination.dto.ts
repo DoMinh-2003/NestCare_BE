@@ -1,18 +1,18 @@
 import { Type } from 'class-transformer';
+import { ValidateNested } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import SearchBlogDto from './search.dto';
-import {
-  PaginationRequestModel,
-  SearchPaginationRequestModel,
-} from 'src/common/models';
+import { PaginationRequestModel } from 'src/common/models';
 
-export default class SearchWithPaginationDto extends SearchPaginationRequestModel<SearchBlogDto> {
-  constructor(
-    pageInfo: PaginationRequestModel,
-    searchCondition: SearchBlogDto,
-  ) {
-    super(pageInfo, searchCondition);
-  }
+export default class SearchWithPaginationDto {
+  @ApiProperty({ type: PaginationRequestModel })
+  @ValidateNested()
+  @Type(() => PaginationRequestModel)
+  pageInfo: PaginationRequestModel;
 
+  @ApiPropertyOptional({ type: SearchBlogDto })
+  @ValidateNested()
   @Type(() => SearchBlogDto)
-  public searchCondition!: SearchBlogDto;
+  searchCondition?: SearchBlogDto = new SearchBlogDto();
+
 }

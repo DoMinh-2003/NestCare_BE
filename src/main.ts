@@ -15,6 +15,7 @@ async function bootstrap() {
   // app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
   initializeFirebaseAdmin(app.get(ConfigService));
 
+
   // app.useGlobalPipes(new ValidationPipe({
   //   exceptionFactory: (errors) => {
   //     // Trả về lỗi chi tiết từ `class-validator`
