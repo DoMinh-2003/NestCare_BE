@@ -5,7 +5,10 @@ import {
   IsInt,
   IsArray,
   IsUUID,
+  IsEnum,
+  IsOptional,
 } from 'class-validator';
+import { DurationType } from '../entity/package.entity';
 
 class PackageServiceDto {
   @ApiProperty({
@@ -49,6 +52,26 @@ export default class CreatePackageDto {
   @IsNotEmpty()
   @IsInt()
   price: number;
+
+  @ApiProperty({
+    description: 'Giá trị thời gian hiệu lực của gói',
+    example: 3,
+    nullable: true,
+  })
+  @IsOptional()
+  @IsInt()
+
+  durationValue?: number;
+
+  @ApiProperty({
+    description: 'Đơn vị thời gian hiệu lực của gói',
+    enum: DurationType,
+    example: 'DAY, WEEK, MONTH',
+    nullable: true,
+  })
+  @IsOptional()
+  @IsEnum(DurationType)
+  durationType?: DurationType;
 
   @ApiProperty({
     description: 'A list of services associated with the package',
