@@ -60,7 +60,6 @@ export class UserPackagesService {
       user,
       //   fetalRecord,
       package: packageEntity,
-      isActive: true,
     });
 
     const newUserPackage = await this.userPackagesRepository.save(userPackage);

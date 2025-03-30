@@ -53,7 +53,7 @@ export class AppointmentService {
     private readonly serviceRepo: Repository<Services>,
 
     @InjectRepository(UserPackages)
-    private readonly userPackageRepo: Repository<UserPackages>,
+    private readonly userPackagesRepo: Repository<UserPackages>,
 
     @InjectRepository(PackageService)
     private readonly packageServiceRepo: Repository<PackageService>,
@@ -129,6 +129,7 @@ export class AppointmentService {
       fetalRecords.map(async (fetalRecordData) => {
         const fetalRecord = await this.fetalRecordRepo.findOne({
           where: { id: fetalRecordData.fetalRecordId },
+          relations: ['mother'],
         });
         if (!fetalRecord) {
           throw new NotFoundException(
@@ -145,8 +146,6 @@ export class AppointmentService {
           },
         });
 
-    
-
         if (existingFetalAppointment) {
           throw new BadRequestException(
             `Thai nhi ${fetalRecord.name} đã có lịch hẹn vào ngày và giờ này.`,
@@ -157,19 +156,48 @@ export class AppointmentService {
       }),
     );
 
+    const fetalRecord = fetalRecordEntities[0];
+
+    // Check for active packages for the mother
+    const activePackages = await this.userPackagesRepo.find({
+      where: { user: { id: fetalRecord.mother.id }, isActive: true },
+    });
+
+    let appointmentStatus = AppointmentStatus.PENDING;
+    let paymentUrl: string | null = null;
+
+    if (!activePackages || activePackages.length === 0) {
+      // Mother has no active packages, set status to AWAITING_DEPOSIT and generate VNPAY URL
+      appointmentStatus = AppointmentStatus.AWAITING_DEPOSIT;
+    }
+
+    console.log(appointmentStatus);
+
     const appointment = this.appointmentRepo.create({
       fetalRecords: fetalRecordEntities,
       doctor,
       appointmentDate: date,
       slot,
-      status: AppointmentStatus.PENDING,
+      status: appointmentStatus, // Set the determined status
     });
 
     const savedAppointment = await this.appointmentRepo.save(appointment);
+console.log("savedAppointment", savedAppointment);
+    if (appointmentStatus === AppointmentStatus.AWAITING_DEPOSIT) {
+      const depositAmount = 50000;
+      const bookingId = savedAppointment.id;
+      const returnUrlParams = `?bookingId=${bookingId}`;
+
+      paymentUrl = await this.vnpayService.createPayment(
+        bookingId,
+        returnUrlParams,
+        depositAmount * 100,
+      );
+    }
 
     const appointmentHistory = this.appointmentHistoryRepo.create({
-      appointment,
-      status: AppointmentStatus.PENDING as any,
+      appointment: savedAppointment,
+      status: appointmentStatus as any,
       changedBy,
     });
     await this.appointmentHistoryRepo.save(appointmentHistory);
@@ -182,7 +210,7 @@ export class AppointmentService {
         '. Vui lòng xác nhận.',
     );
 
-    return savedAppointment;
+    return paymentUrl ? paymentUrl : savedAppointment;
   }
 
   //   async updateAppointmentStatus(
@@ -415,7 +443,7 @@ export class AppointmentService {
     const newAppointment = await this.appointmentRepo.save(appointment);
 
     if (totalCost > 0) {
-      totalCost *= 100
+      totalCost *= 100;
       const param = `?appointmentId=${newAppointment.id}`;
       return await this.vnpayService.createPayment(
         newAppointment.id,
@@ -649,33 +677,39 @@ export class AppointmentService {
     const endOfDay = new Date(date);
     endOfDay.setHours(23, 59, 59, 999);
 
-    const queryBuilder = this.appointmentRepo.createQueryBuilder('appointment')
-    .leftJoinAndSelect('appointment.fetalRecords', 'fetalRecord')
-    .leftJoinAndSelect('fetalRecord.checkupRecords', 'checkupRecord')
-    .leftJoinAndSelect('appointment.doctor', 'doctor')
-    .leftJoinAndSelect('appointment.appointmentServices', 'appointmentServices')
-    .leftJoinAndSelect('appointment.medicationBills', 'medicationBills')
-    .leftJoinAndSelect('fetalRecord.mother', 'mother') // Join với bảng thông tin mẹ
-    .leftJoinAndSelect('appointment.slot', 'slot')
-    .leftJoinAndSelect('appointment.history', 'history')
-    .leftJoinAndSelect('history.changedBy', 'changedBy')
-    .where('appointment.doctor.id = :doctorId', { doctorId })
-    .andWhere('appointment.appointmentDate BETWEEN :startOfDay AND :endOfDay', { startOfDay, endOfDay });
+    const queryBuilder = this.appointmentRepo
+      .createQueryBuilder('appointment')
+      .leftJoinAndSelect('appointment.fetalRecords', 'fetalRecord')
+      .leftJoinAndSelect('fetalRecord.checkupRecords', 'checkupRecord')
+      .leftJoinAndSelect('appointment.doctor', 'doctor')
+      .leftJoinAndSelect(
+        'appointment.appointmentServices',
+        'appointmentServices',
+      )
+      .leftJoinAndSelect('appointment.medicationBills', 'medicationBills')
+      .leftJoinAndSelect('fetalRecord.mother', 'mother') // Join với bảng thông tin mẹ
+      .leftJoinAndSelect('appointment.slot', 'slot')
+      .leftJoinAndSelect('appointment.history', 'history')
+      .leftJoinAndSelect('history.changedBy', 'changedBy')
+      .where('appointment.doctor.id = :doctorId', { doctorId })
+      .andWhere(
+        'appointment.appointmentDate BETWEEN :startOfDay AND :endOfDay',
+        { startOfDay, endOfDay },
+      );
 
-  if (status) {
-    queryBuilder.andWhere('appointment.status = :status', { status });
+    if (status) {
+      queryBuilder.andWhere('appointment.status = :status', { status });
+    }
+
+    if (search) {
+      queryBuilder.andWhere(
+        '(mother.fullName LIKE :search OR mother.phone LIKE :search OR mother.email LIKE :search)',
+        { search: `%${search}%` },
+      );
+    }
+
+    return queryBuilder.getMany();
   }
-
-  if (search) {
-    queryBuilder.andWhere(
-      '(mother.fullName LIKE :search OR mother.phone LIKE :search OR mother.email LIKE :search)',
-      { search: `%${search}%` },
-    );
-  }
-
-  return queryBuilder.getMany();
-  }
-
 
   async getAllAppointmentsByDateWithSearch(
     date: Date,
@@ -687,17 +721,24 @@ export class AppointmentService {
     const endOfDay = new Date(date);
     endOfDay.setHours(23, 59, 59, 999);
 
-    const queryBuilder = this.appointmentRepo.createQueryBuilder('appointment')
+    const queryBuilder = this.appointmentRepo
+      .createQueryBuilder('appointment')
       .leftJoinAndSelect('appointment.fetalRecords', 'fetalRecord')
       .leftJoinAndSelect('fetalRecord.checkupRecords', 'checkupRecord')
       .leftJoinAndSelect('appointment.doctor', 'doctor')
-      .leftJoinAndSelect('appointment.appointmentServices', 'appointmentServices')
+      .leftJoinAndSelect(
+        'appointment.appointmentServices',
+        'appointmentServices',
+      )
       .leftJoinAndSelect('appointment.medicationBills', 'medicationBills')
       .leftJoinAndSelect('fetalRecord.mother', 'mother')
       .leftJoinAndSelect('appointment.slot', 'slot')
       .leftJoinAndSelect('appointment.history', 'history')
       .leftJoinAndSelect('history.changedBy', 'changedBy')
-      .where('appointment.appointmentDate BETWEEN :startOfDay AND :endOfDay', { startOfDay, endOfDay });
+      .where('appointment.appointmentDate BETWEEN :startOfDay AND :endOfDay', {
+        startOfDay,
+        endOfDay,
+      });
 
     if (status) {
       queryBuilder.andWhere('appointment.status = :status', { status });
