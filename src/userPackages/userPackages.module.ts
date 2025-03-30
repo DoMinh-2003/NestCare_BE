@@ -11,7 +11,7 @@ import { UserPackageServiceUsage } from 'src/users/model/userPackageServiceUsage
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([ UserPackages, Packages , User, UserPackageServiceUsage]),
+    TypeOrmModule.forFeature([UserPackageServiceUsage, UserPackages, Packages , User, UserPackageServiceUsage]),
   ],
   controllers: [UserPackagesController],
   providers: [UserPackagesService, VnpayService],
