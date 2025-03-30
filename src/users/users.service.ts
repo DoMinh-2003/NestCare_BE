@@ -25,7 +25,7 @@ export class UsersService {
 
     @InjectRepository(Appointment)
     private appointmentRepo: Repository<Appointment>,
-  ) {}
+  ) { }
 
   async findAll(): Promise<User[]> {
     return this.userRepository.find();
@@ -251,4 +251,6 @@ export class UsersService {
 
     return availableDoctors;
   }
+
+
 }
