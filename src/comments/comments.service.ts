@@ -88,6 +88,15 @@ export class CommentsService {
     return comment.user.id !== comment.parent.user.id;
   }
 
+  async getCommentsByBlogId(blogId: string): Promise<Comment[]> {
+    const comments = await this.commentRepository.find({
+      where: { blog: { id: blogId } },
+      relations: ['user', 'parent'],
+      order: { createdAt: 'DESC' }
+    });
+    return comments;
+  }
+
 
 
   findAll() {
