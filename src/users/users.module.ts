@@ -7,9 +7,10 @@ import { Services } from 'src/services/services.entity';
 import { UserPackageServiceUsage } from './model/userPackageServiceUsage.entity';
 import { Appointment } from 'src/appointment/entities/appointment.entity';
 import { UserPackages } from 'src/userPackages/entities/userPackages.entity';
+import { Packages } from 'src/packages/entity/package.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Appointment,UserPackages, User, Services, UserPackageServiceUsage])],
+  imports: [TypeOrmModule.forFeature([Appointment, UserPackages, User, Services, UserPackageServiceUsage, Packages])],
   providers: [UsersService],
   controllers: [UsersController],
   exports: [

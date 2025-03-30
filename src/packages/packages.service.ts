@@ -136,11 +136,20 @@ export class PackagesService {
     return result;
   }
 
-  async getPackage(id: string): Promise<Packages | null> {
-    return await this.packagesRepository.findOne({
-      where: { id },
+  async getPackage(id: string): Promise<Packages> {
+    const packageEntity = await this.packagesRepository.findOne({
+      where: { id, isDeleted: false }, // Thêm điều kiện isDeleted để chỉ lấy gói chưa bị xóa
       relations: ['packageServices', 'packageServices.service'],
     });
+
+    if (!packageEntity) {
+      throw new CustomHttpException(
+        HttpStatus.NOT_FOUND,
+        `Không tìm thấy gói dịch vụ với ID: "${id}"`,
+      );
+    }
+
+    return packageEntity;
   }
 
   async updatePackage(

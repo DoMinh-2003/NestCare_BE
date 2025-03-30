@@ -16,6 +16,7 @@ import {
 import { UserPackageServiceUsage } from 'src/users/model/userPackageServiceUsage.entity';
 import { SchedulerRegistry } from '@nestjs/schedule';
 import { MailService } from 'src/common/service/mail.service';
+import { PackagesService } from 'src/packages/packages.service';
 
 @Injectable()
 export class UserPackagesService {
@@ -39,7 +40,7 @@ export class UserPackagesService {
     private vnpayService: VnpayService, // Inject VnpayService vào constructor
 
     private mailService: MailService,
-  ) {}
+  ) { }
 
   // Mua gói dịch vụ cho thai nhi
   async purchasePackage(userId: string, packageId: string) {
@@ -138,32 +139,32 @@ export class UserPackagesService {
       const packageServices = userPackage.package.packageServices;
       const packageEntity = userPackage.package;
 
-     // Map dịch vụ sang UserPackageServiceUsage
-     const userServiceUsages = await Promise.all(
-      packageServices.map(async (servicePackage) => {
-        const existingUsage = await this.userPackageServiceUsageRepository.findOne({
-          where: {
-            user: { id: user.id },
-            service: { id: servicePackage.service.id },
-            order: { id: userPackage.id }, // Thêm điều kiện tìm kiếm theo order
-          },
-        });
-
-        if (existingUsage) {
-          // Nếu đã tồn tại cho đơn hàng này, cập nhật số lượt
-          existingUsage.slot += servicePackage.slot;
-          return this.userPackageServiceUsageRepository.save(existingUsage);
-        } else {
-          // Nếu chưa có cho đơn hàng này, tạo mới và liên kết với order
-          return this.userPackageServiceUsageRepository.create({
-            user,
-            service: servicePackage.service,
-            slot: servicePackage.slot,
-            order: userPackage, // Liên kết với UserPackages hiện tại
+      // Map dịch vụ sang UserPackageServiceUsage
+      const userServiceUsages = await Promise.all(
+        packageServices.map(async (servicePackage) => {
+          const existingUsage = await this.userPackageServiceUsageRepository.findOne({
+            where: {
+              user: { id: user.id },
+              service: { id: servicePackage.service.id },
+              order: { id: userPackage.id }, // Thêm điều kiện tìm kiếm theo order
+            },
           });
-        }
-      }),
-    );
+
+          if (existingUsage) {
+            // Nếu đã tồn tại cho đơn hàng này, cập nhật số lượt
+            existingUsage.slot += servicePackage.slot;
+            return this.userPackageServiceUsageRepository.save(existingUsage);
+          } else {
+            // Nếu chưa có cho đơn hàng này, tạo mới và liên kết với order
+            return this.userPackageServiceUsageRepository.create({
+              user,
+              service: servicePackage.service,
+              slot: servicePackage.slot,
+              order: userPackage, // Liên kết với UserPackages hiện tại
+            });
+          }
+        }),
+      );
 
       // Lưu tất cả các bản ghi mới hoặc cập nhật
       await this.userPackageServiceUsageRepository.save(userServiceUsages);
@@ -219,11 +220,10 @@ export class UserPackagesService {
           );
 
           const subject = 'Thông báo gói dịch vụ đã hết hạn';
-          const text = `Chào ${packageToDeactivate.user.fullName || packageToDeactivate.user.username},\n\nGói dịch vụ "${
-            packageToDeactivate.package
-              ? packageToDeactivate.package.name
-              : 'Không xác định'
-          }" mà bạn đã mua vào ngày ${packageToDeactivate.createdAt.toLocaleDateString()} đã hết hạn vào ngày ${endDate.toLocaleDateString()}.\n\nVui lòng kiểm tra tài khoản của bạn để biết thêm chi tiết hoặc liên hệ với chúng tôi nếu bạn có bất kỳ câu hỏi nào.\n\nTrân trọng,\nĐội ngũ hỗ trợ của chúng tôi.`;
+          const text = `Chào ${packageToDeactivate.user.fullName || packageToDeactivate.user.username},\n\nGói dịch vụ "${packageToDeactivate.package
+            ? packageToDeactivate.package.name
+            : 'Không xác định'
+            }" mà bạn đã mua vào ngày ${packageToDeactivate.createdAt.toLocaleDateString()} đã hết hạn vào ngày ${endDate.toLocaleDateString()}.\n\nVui lòng kiểm tra tài khoản của bạn để biết thêm chi tiết hoặc liên hệ với chúng tôi nếu bạn có bất kỳ câu hỏi nào.\n\nTrân trọng,\nĐội ngũ hỗ trợ của chúng tôi.`;
 
           try {
             await this.mailService.sendWelcomeEmail(
@@ -279,5 +279,122 @@ export class UserPackagesService {
     queryBuilder.orderBy('userPackage.createdAt', 'DESC');
 
     return paginate<UserPackages>(queryBuilder, options);
+  }
+
+  // async upgradePackage(userPackageId: string, newPackageId: string) {
+  //   // 1. Tìm gói hiện tại của người dùng
+  //   const currentUserPackage = await this.userPackagesRepository.findOne({
+  //     where: { id: userPackageId },
+  //     relations: ['package', 'serviceUsages', 'user'],
+  //   });
+
+  //   if (!currentUserPackage) {
+  //     throw new Error('Gói hiện tại không tồn tại');
+  //   }
+
+  //   // 2. Tìm gói mới cần nâng cấp lên
+  //   const newPackage = await this.packagesRepository.findOne({
+  //     where: { id: newPackageId },
+  //     relations: ['packageServices'],
+  //   });
+
+  //   if (!newPackage) {
+  //     throw new Error('Gói mới không tồn tại');
+  //   }
+
+  //   // 3. Đánh dấu gói cũ không còn hoạt động
+  //   currentUserPackage.isActive = false;
+  //   currentUserPackage.isDeleted = true;
+  //   await this.userPackagesRepository.save(currentUserPackage);
+
+  //   // 4. Tạo gói mới
+  //   const newUserPackage = this.userPackagesRepository.create({
+  //     user: currentUserPackage.user,
+  //     package: newPackage,
+  //     status: UserPackageStatus.PENDING, // Chờ thanh toán
+  //     isActive: false,
+  //   });
+
+  //   const savedNewUserPackage = await this.userPackagesRepository.save(newUserPackage);
+
+  //   // 5. Chuyển các lượt sử dụng chưa dùng từ gói cũ sang gói mới
+  //   for (const usage of currentUserPackage.serviceUsages) {
+  //     if (usage.slot > 0) {
+  //       const newUsage = this.userPackageServiceUsageRepository.create({
+  //         user: currentUserPackage.user,
+  //         service: usage.service,
+  //         slot: usage.slot, // Giữ nguyên số lượt chưa dùng
+  //         order: savedNewUserPackage,
+  //       });
+  //       await this.userPackageServiceUsageRepository.save(newUsage);
+  //     }
+  //   }
+
+  //   // 6. Xử lý thanh toán (nếu cần)
+  //   const priceDifference = newPackage.price - currentUserPackage.package.price;
+  //   if (priceDifference > 0) {
+  //     const param = `?order=${savedNewUserPackage.id}`;
+  //     const paymentUrl = await this.vnpayService.createPayment(
+  //       savedNewUserPackage.id,
+  //       param,
+  //       priceDifference * 100, // Chênh lệch giá
+  //     );
+  //     return { newUserPackage: savedNewUserPackage, paymentUrl };
+  //   }
+
+  //   return savedNewUserPackage;
+  // }
+
+  async upgradePackage(userId: string, currentPackageId: string, newPackageId: string) {
+    // Lấy thông tin user
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new Error('Không tìm thấy người dùng');
+    }
+
+    // Lấy thông tin gói hiện tại
+    const currentPackage = await this.userPackagesRepository.findOne({
+      where: { id: currentPackageId, user: { id: userId }, isActive: true },
+      relations: ['package'],
+    });
+    if (!currentPackage) {
+      throw new Error('Gói hiện tại không tồn tại hoặc không active');
+    }
+
+    // Lấy thông tin gói mới
+    const newPackage = await this.packagesRepository.findOne({
+      where: { id: newPackageId },
+    });
+    if (!newPackage) {
+      throw new Error('Gói mới không tồn tại');
+    }
+
+    // Tính phần chênh lệch giá
+    const priceDifference = newPackage.price - currentPackage.package.price;
+    const amountToPay = priceDifference > 0 ? priceDifference : newPackage.price;
+
+    // Tạo bản ghi UserPackages mới cho gói nâng cấp
+    const newUserPackage = this.userPackagesRepository.create({
+      user,
+      package: newPackage,
+      status: UserPackageStatus.PENDING,
+      isActive: false,
+    });
+    const savedNewUserPackage = await this.userPackagesRepository.save(newUserPackage);
+
+    // Tạo URL thanh toán
+    const param = `?order=${savedNewUserPackage.id}`;
+    const paymentUrl = await this.vnpayService.createPayment(
+      savedNewUserPackage.id, // orderId
+      param,                 // Tham số bổ sung
+      amountToPay * 100,     // Vnpay yêu cầu đơn vị VNĐ * 100
+    );
+
+    return {
+      paymentUrl,
+      orderId: savedNewUserPackage.id,
+      amountToPay,
+      priceDifference: priceDifference > 0 ? priceDifference : 0,
+    };
   }
 }

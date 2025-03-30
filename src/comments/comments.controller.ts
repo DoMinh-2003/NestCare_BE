@@ -23,7 +23,7 @@ export class CommentsController {
   @Public()
   @Get('blog/:blogId')
   @ApiOperation({ summary: 'Lấy danh sách bình luận theo Blog ID' })
-  @ApiParam({ name: 'blogId', description: 'ID của blog', example: '663a09a9c7a5420020c1249b' })
+  @ApiParam({ name: 'blogId', description: 'ID của blog', example: '654a2366-5cd3-4ce4-a241-d213d4186af6' })
   @ApiResponse({ status: 200, description: 'Danh sách bình luận được trả về', type: [Comment] })
   async getCommentsByBlogId(@Param('blogId') blogId: string): Promise<Comment[]> {
     return this.commentsService.getCommentsByBlogId(blogId);
