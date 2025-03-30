@@ -352,26 +352,35 @@ export class UserPackagesService {
       throw new Error('Không tìm thấy người dùng');
     }
 
-    // Lấy thông tin gói hiện tại
-    const currentPackage = await this.userPackagesRepository.findOne({
+    // Lấy thông tin gói hiện tại và các dịch vụ đã sử dụng
+    const currentUserPackage = await this.userPackagesRepository.findOne({
       where: { id: currentPackageId, user: { id: userId }, isActive: true },
-      relations: ['package'],
+      relations: ['package', 'serviceUsages', 'serviceUsages.service'],
     });
-    if (!currentPackage) {
+    if (!currentUserPackage) {
       throw new Error('Gói hiện tại không tồn tại hoặc không active');
     }
 
     // Lấy thông tin gói mới
     const newPackage = await this.packagesRepository.findOne({
       where: { id: newPackageId },
+      relations: ['packageServices'],
     });
     if (!newPackage) {
       throw new Error('Gói mới không tồn tại');
     }
 
-    // Tính phần chênh lệch giá
-    const priceDifference = newPackage.price - currentPackage.package.price;
-    const amountToPay = priceDifference > 0 ? priceDifference : newPackage.price;
+    // Tính giá trị còn lại của gói cũ
+    let remainingValue = 0;
+    const totalServices = currentUserPackage.package.packageServices.length; // Tổng số dịch vụ trong gói
+    const servicePrice = currentUserPackage.package.price / totalServices; // Giá trị mỗi dịch vụ
+    const usedServices = currentUserPackage.serviceUsages.reduce((sum, usage) => sum + (usage.slot || 0), 0); // Số dịch vụ đã dùng
+    const unusedServices = totalServices - usedServices; // Số dịch vụ chưa dùng
+    remainingValue = unusedServices * servicePrice; // Giá trị còn lại
+
+    // Tính số tiền phải trả
+    const amountToPay = newPackage.price - remainingValue;
+    const finalAmount = amountToPay > 0 ? amountToPay : 0; // Không hoàn tiền nếu âm
 
     // Tạo bản ghi UserPackages mới cho gói nâng cấp
     const newUserPackage = this.userPackagesRepository.create({
@@ -385,16 +394,16 @@ export class UserPackagesService {
     // Tạo URL thanh toán
     const param = `?order=${savedNewUserPackage.id}`;
     const paymentUrl = await this.vnpayService.createPayment(
-      savedNewUserPackage.id, // orderId
-      param,                 // Tham số bổ sung
-      amountToPay * 100,     // Vnpay yêu cầu đơn vị VNĐ * 100
+      savedNewUserPackage.id,
+      param,
+      finalAmount * 100, // Vnpay yêu cầu đơn vị VNĐ * 100
     );
 
     return {
       paymentUrl,
       orderId: savedNewUserPackage.id,
-      amountToPay,
-      priceDifference: priceDifference > 0 ? priceDifference : 0,
+      amountToPay: finalAmount,
+      remainingValue,
     };
   }
 }
