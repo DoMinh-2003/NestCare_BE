@@ -1,4 +1,8 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Between, MoreThan, Repository } from 'typeorm';
 import { User } from './model/user.entity';
@@ -16,39 +20,42 @@ export class UsersService {
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
 
-
     @InjectRepository(UserPackageServiceUsage)
     private userPackageServiceUsageRepository: Repository<UserPackageServiceUsage>,
 
     @InjectRepository(Appointment)
     private appointmentRepo: Repository<Appointment>,
-
-
-  ) { }
+  ) {}
 
   async findAll(): Promise<User[]> {
     return this.userRepository.find();
   }
 
-
   // Hàm đăng ký người dùng
   async registerUser(registerUserDto: RegisterUserDto): Promise<User> {
-    const { username, email, password, fullName, phone, role, image } = registerUserDto;
+    const { username, email, password, fullName, phone, role, image } =
+      registerUserDto;
 
     // Kiểm tra nếu username đã tồn tại
-    const existingUserByUsername = await this.userRepository.findOne({ where: { username } });
+    const existingUserByUsername = await this.userRepository.findOne({
+      where: { username },
+    });
     if (existingUserByUsername) {
       throw new ConflictException('Tên đăng nhập đã tồn tại');
     }
 
     // Kiểm tra nếu email đã tồn tại
-    const existingUserByEmail = await this.userRepository.findOne({ where: { email } });
+    const existingUserByEmail = await this.userRepository.findOne({
+      where: { email },
+    });
     if (existingUserByEmail) {
       throw new ConflictException('Email đã tồn tại');
     }
 
     // Kiểm tra nếu phone đã tồn tại
-    const existingUserByPhone = await this.userRepository.findOne({ where: { phone } });
+    const existingUserByPhone = await this.userRepository.findOne({
+      where: { phone },
+    });
     if (existingUserByPhone) {
       throw new ConflictException('Số điện thoại đã tồn tại');
     }
@@ -74,7 +81,6 @@ export class UsersService {
   async findUsersByRole(role: Role): Promise<User[]> {
     return this.userRepository.find({ where: { role, isDeleted: false } });
   }
-
 
   // Hàm tìm người dùng theo ID
 
@@ -142,9 +148,14 @@ export class UsersService {
     return savedUser instanceof Array ? savedUser[0] : savedUser;
   }
 
-
-  async searchUsers(pageNum: number, pageSize: number, query?: string, role?: Role) {
-    const qb = this.userRepository.createQueryBuilder('user')
+  async searchUsers(
+    pageNum: number,
+    pageSize: number,
+    query?: string,
+    role?: Role,
+  ) {
+    const qb = this.userRepository
+      .createQueryBuilder('user')
       .where('user.isDeleted = :isDeleted', { isDeleted: false });
 
     // Nếu có role thì lọc theo role
@@ -162,7 +173,7 @@ export class UsersService {
           queryFullName: `%${query}%`,
           queryEmail: `%${query}%`,
           queryPhone: `%${query}%`,
-        }
+        },
       );
     }
 
@@ -179,8 +190,6 @@ export class UsersService {
     };
   }
 
-
-
   async getAvailableServices(userId: string) {
     const usages = await this.userPackageServiceUsageRepository.find({
       where: {
@@ -188,29 +197,31 @@ export class UsersService {
         slot: MoreThan(0),
         order: { isActive: true }, // Thêm điều kiện kiểm tra UserPackage.isActive = true
       },
-      relations: ['service', 'order'], // Cần eager load 'order' để truy cập isActive
+      relations: ['service', 'order', 'order.package'], // Cần eager load 'order' để truy cập isActive
     });
 
     if (!usages.length) {
       throw new NotFoundException('No available services found for this user');
     }
 
-// Group services by order
-const groupedServices = usages.reduce((acc, usage) => {
-  const orderId = usage.order.id;
-  if (!acc[orderId]) {
-    acc[orderId] = {
-      order: usage.order,
-      services: [],
-    };
-  }
-  acc[orderId].services.push(usage.service);
-  return acc;
-}, {});
+    // Group services by order and include slot information
+    const groupedServices = usages.reduce((acc, usage) => {
+      const orderId = usage.order.id;
+      if (!acc[orderId]) {
+        acc[orderId] = {
+          package: usage.order.package,
+          services: [],
+        };
+      }
+      acc[orderId].services.push({
+        service: usage.service,
+        slot: usage.slot, // Include the slot information here
+      });
+      return acc;
+    }, {});
 
-return Object.values(groupedServices);
+    return Object.values(groupedServices);
   }
-
 
   async getAvailableDoctors(date: Date, slotId: string): Promise<User[]> {
     const startOfDay = new Date(date);
@@ -219,8 +230,9 @@ return Object.values(groupedServices);
     endOfDay.setHours(23, 59, 59, 999);
 
     // 1. Lấy tất cả các bác sĩ
-    const allDoctors = await this.userRepository.find({ where: { role: Role.Doctor, isDeleted: false } });
-
+    const allDoctors = await this.userRepository.find({
+      where: { role: Role.Doctor, isDeleted: false },
+    });
 
     // 2. Lấy tất cả các cuộc hẹn đã được đặt trong ngày và khung giờ cụ thể
     const bookedAppointments = await this.appointmentRepo.find({
@@ -231,12 +243,12 @@ return Object.values(groupedServices);
       relations: ['doctor'], // Để có thể truy cập thông tin bác sĩ
     });
     // 3. Lọc ra các bác sĩ không có trong danh sách các cuộc hẹn đã đặt
-    const availableDoctors = allDoctors.filter(doctor => {
-      return !bookedAppointments.some(appointment => appointment.doctor.id === doctor.id);
+    const availableDoctors = allDoctors.filter((doctor) => {
+      return !bookedAppointments.some(
+        (appointment) => appointment.doctor.id === doctor.id,
+      );
     });
 
     return availableDoctors;
   }
-
-
 }

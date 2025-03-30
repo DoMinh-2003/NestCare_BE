@@ -4,6 +4,7 @@ import { User } from 'src/users/model/user.entity';
 
 
 export enum AppointmentHistoryStatus {
+  AWAITING_DEPOSIT = 'AWAITING_DEPOSIT', // Đang chờ đặt cọc
   PENDING = 'PENDING', // Đang chờ xác nhận
   CONFIRMED = 'CONFIRMED', // Đã xác nhận
   CHECKED_IN = 'CHECKED_IN', // Bệnh nhân đã đến bệnh viện
