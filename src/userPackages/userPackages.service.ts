@@ -76,7 +76,7 @@ export class UserPackagesService {
    // Lấy tất cả các gói dịch vụ của một user (mẹ bầu)
    async getUserPackagesByUser(userId: string): Promise<UserPackages[]> {
     return this.userPackagesRepository.find({
-      where: { user: { id: userId }, isDeleted: false },
+      where: { user: { id: userId }, isDeleted: false, isActive: false},
       relations: ['package', 'user'],  // Lấy thông tin gói dịch vụ và thai nhi
     });
   }
@@ -136,6 +136,7 @@ export class UserPackagesService {
                   user,
                   service: servicePackage.service,
                   slot: servicePackage.slot,
+                  order: userPackage,
                 });
               }
             })

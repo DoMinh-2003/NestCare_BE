@@ -183,8 +183,12 @@ export class UsersService {
 
   async getAvailableServices(userId: string) {
     const services = await this.userPackageServiceUsageRepository.find({
-      where: { user: { id: userId }, slot: MoreThan(0) },
-      relations: ['service'],
+      where: {
+        user: { id: userId },
+        slot: MoreThan(0),
+        order: { isActive: true }, // Thêm điều kiện kiểm tra UserPackage.isActive = true
+      },
+      relations: ['service', 'order'], // Cần eager load 'order' để truy cập isActive
     });
 
     if (!services.length) {
