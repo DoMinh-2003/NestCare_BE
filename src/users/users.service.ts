@@ -182,7 +182,7 @@ export class UsersService {
 
 
   async getAvailableServices(userId: string) {
-    const services = await this.userPackageServiceUsageRepository.find({
+    const usages = await this.userPackageServiceUsageRepository.find({
       where: {
         user: { id: userId },
         slot: MoreThan(0),
@@ -191,11 +191,24 @@ export class UsersService {
       relations: ['service', 'order'], // Cần eager load 'order' để truy cập isActive
     });
 
-    if (!services.length) {
+    if (!usages.length) {
       throw new NotFoundException('No available services found for this user');
     }
 
-    return services;
+// Group services by order
+const groupedServices = usages.reduce((acc, usage) => {
+  const orderId = usage.order.id;
+  if (!acc[orderId]) {
+    acc[orderId] = {
+      order: usage.order,
+      services: [],
+    };
+  }
+  acc[orderId].services.push(usage.service);
+  return acc;
+}, {});
+
+return Object.values(groupedServices);
   }
 
 
