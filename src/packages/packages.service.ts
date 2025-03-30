@@ -44,6 +44,8 @@ export class PackagesService {
       name: model.name,
       description: model.description,
       price: model.price,
+      durationValue: model.durationValue, // Lưu durationValue
+      durationType: model.durationType,   // Lưu durationType
       createdAt: new Date(),
       updatedAt: new Date(),
       isDeleted: false,
