@@ -7,7 +7,7 @@ import { Comment } from './comment.entity';
 import { Public } from 'src/auth/decorators/public.decorator';
 
 @ApiTags('comments')
-@Controller('comments')
+@Controller('/api/comments')
 export class CommentsController {
   constructor(private readonly commentsService: CommentsService) { }
 
