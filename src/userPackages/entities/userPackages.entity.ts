@@ -6,10 +6,12 @@ import {
   JoinColumn,
   CreateDateColumn,
   UpdateDateColumn,
+  OneToMany,
 } from 'typeorm';
 import { User } from 'src/users/model/user.entity';
 // import { FetalRecord } from 'src/fetal-records/entities/fetal-record.entity';
 import { Packages } from 'src/packages/entity/package.entity';
+import { UserPackageServiceUsage } from 'src/users/model/userPackageServiceUsage.entity';
 
 // Enum cho trạng thái của gói dịch vụ
 export enum UserPackageStatus {
@@ -50,4 +52,7 @@ export class UserPackages {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @OneToMany(() => UserPackageServiceUsage, (usage) => usage.order)
+  serviceUsages: UserPackageServiceUsage[]; // Các lượt sử dụng dịch vụ thuộc về đơn hàng này
 }
