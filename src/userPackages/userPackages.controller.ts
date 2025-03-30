@@ -84,13 +84,14 @@ export class UserPackagesController {
     return this.userPackagesService.getAllUserPackages(status, packageName, options);
   }
 
-  @Post(':id/upgrade')
+  @Post(':id/upgrade/:newPackageId')
   async upgradePackage(
     @Req() req: Request,
     @Param('id') userPackageId: string,
-    @Body() upgradePackageDto: { newPackageId: string },
+    @Param('newPackageId') newPackageId: string,
   ) {
     const userId = (req as any).user.id;
-    return await this.userPackagesService.upgradePackage(userId, userPackageId, upgradePackageDto.newPackageId);
+    return await this.userPackagesService.upgradePackage(userId, userPackageId, newPackageId);
   }
+
 }
