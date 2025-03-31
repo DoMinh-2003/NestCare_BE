@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Not, Repository } from 'typeorm';
+import { Between, Not, Repository } from 'typeorm';
 import { Blog } from './blog.entity';
 import { SearchPaginationResponseModel } from 'src/common/models';
 import { formatPaginationResult, isEmptyObject } from 'src/utils/helpers';
@@ -42,6 +42,22 @@ export class BlogsService {
 
     if (!hasPurchasedPackage) {
       throw new CustomHttpException(HttpStatus.FORBIDDEN, 'Bạn cần mua gói dịch vụ để bình luận.');
+    }
+
+    const today = new Date();
+    const startOfDay = new Date(today.setHours(0, 0, 0, 0));
+    const endOfDay = new Date(today.setHours(23, 59, 59, 999));
+
+    // Kiểm tra số bài viết của user trong ngày
+    const todayBlogCount = await this.blogRepository.count({
+      where: {
+        user: { id: user.id },
+        createdAt: Between(startOfDay, endOfDay), // Lọc theo ngày
+      },
+    });
+
+    if (todayBlogCount >= 5) {
+      throw new CustomHttpException(HttpStatus.FORBIDDEN, 'Bạn chỉ có thể đăng tối đa 5 bài mỗi ngày.');
     }
 
     const existingBlog = await this.blogRepository.findOne({
