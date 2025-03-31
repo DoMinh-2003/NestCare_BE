@@ -2,6 +2,7 @@ import { FetalRecord } from 'src/fetal-records/entities/fetal-record.entity';
 import { User } from 'src/users/model/user.entity';
 import {
   Column,
+  CreateDateColumn,
   Entity,
   JoinTable,
   ManyToMany,
@@ -21,7 +22,7 @@ import { ServiceBilling } from './service-billing.entity';
 export enum AppointmentStatus {
   AWAITING_DEPOSIT = 'AWAITING_DEPOSIT', // Đang chờ đặt cọc
   PENDING = 'PENDING', // Đang chờ xác nhận
-  CONFIRMED = 'CONFIRMED', // Đã xác nhận
+  // CONFIRMED = 'CONFIRMED', // Đã xác nhận
   CHECKED_IN = 'CHECKED_IN', // Bệnh nhân đã đến bệnh viện
   IN_PROGRESS = 'IN_PROGRESS', // Đang được khám
   COMPLETED = 'COMPLETED', // Đã hoàn tất
@@ -29,6 +30,8 @@ export enum AppointmentStatus {
   FAIL = 'FAIL', // 
   NO_SHOW = 'NO_SHOW', // Bệnh nhân không đến
   REFUNDED = 'REFUNDED', // Đã hoàn tiền
+  DEPOSIT_FAILED = 'DEPOSIT_FAILED', // Đặt cọc thất bại
+  PAYMENT_FAILED = 'PAYMENT_FAILED', // Thanh toán dịch vụ thất bại
 }
 
 @Entity('appointments')
@@ -83,4 +86,6 @@ export class Appointment {
 
   // @Column({ type: 'boolean', default: false })
   // isFollow: boolean;
+    @CreateDateColumn()
+    createdAt: Date;
 }

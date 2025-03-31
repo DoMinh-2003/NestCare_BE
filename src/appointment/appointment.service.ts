@@ -107,7 +107,7 @@ export class AppointmentService {
       
       
       
-      Lịch khám của bạn đã được đặt thành công vào ngày ${appointment.appointmentDate.toLocaleDateString()} lúc ${appointment.slot.startTime} với bác sĩ ${doctor.fullName}.
+      Lịch khám của bạn đã được đặt thành công vào ngày ${appointment.appointmentDate} lúc ${appointment.slot.startTime} với bác sĩ ${doctor.fullName}.
       
       
       
@@ -168,7 +168,7 @@ export class AppointmentService {
                 'Thông Báo Hủy Lịch Khám Bệnh Viện',
                 `Chào bạn ${appointmentToCheck.fetalRecords[0].mother.fullName},
   
-  Chúng tôi rất tiếc phải thông báo rằng lịch khám của bạn vào ngày ${appointmentToCheck.appointmentDate.toLocaleDateString()} lúc ${appointmentToCheck.slot.startTime} với bác sĩ ${appointmentToCheck.doctor.fullName} đã bị hủy do bạn không đến trong vòng 15 phút sau giờ hẹn.
+  Chúng tôi rất tiếc phải thông báo rằng lịch khám của bạn vào ngày ${appointmentToCheck.appointmentDate} lúc ${appointmentToCheck.slot.startTime} với bác sĩ ${appointmentToCheck.doctor.fullName} đã bị hủy do bạn không đến trong vòng 15 phút sau giờ hẹn.
   
   Nếu bạn vẫn có nhu cầu khám, vui lòng đặt lịch hẹn mới.
   
