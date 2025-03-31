@@ -19,6 +19,7 @@ export enum UserPackageStatus {
   PAID = 'PAID', // Đã thanh toán
   COMPLETED = 'COMPLETED', // Đã hoàn tất
   CANCELED = 'CANCELED', // Đã hủy
+  UPGRADE = 'UPGRADE'
 }
 
 @Entity('orders')

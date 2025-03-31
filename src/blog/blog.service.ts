@@ -13,6 +13,7 @@ import {
 import { CustomHttpException } from 'src/common/exceptions';
 import { User } from 'src/users/model/user.entity';
 import { Category } from 'src/category/category.entity';
+import { UserPackages } from 'src/userPackages/entities/userPackages.entity';
 
 @Injectable()
 export class BlogsService {
@@ -21,6 +22,9 @@ export class BlogsService {
     private readonly blogRepository: Repository<Blog>,
     @InjectRepository(Category)
     private readonly categoryRepository: Repository<Category>,
+
+    @InjectRepository(UserPackages)
+    private readonly userPackagesRepository: Repository<UserPackages>,
   ) { }
 
   async createBlog(model: CreateBlogDto, user): Promise<Blog> {
@@ -31,10 +35,19 @@ export class BlogsService {
       throw new CustomHttpException(HttpStatus.NOT_FOUND, 'Model data is empty');
     }
 
+    // Kiểm tra xem user đã mua gói dịch vụ hay chưa
+    const hasPurchasedPackage = await this.userPackagesRepository.findOne({
+      where: { user: { id: user.id }, isDeleted: false },
+    });
+
+    if (!hasPurchasedPackage) {
+      throw new CustomHttpException(HttpStatus.FORBIDDEN, 'Bạn cần mua gói dịch vụ để bình luận.');
+    }
 
     const existingBlog = await this.blogRepository.findOne({
       where: { title: model.title },
     });
+
     if (existingBlog) {
       throw new CustomHttpException(
         HttpStatus.CONFLICT,
@@ -49,13 +62,16 @@ export class BlogsService {
     if (!category) {
       throw new CustomHttpException(HttpStatus.NOT_FOUND, 'Category không tồn tại');
     }
+
     const newBlog = this.blogRepository.create({
       ...model,
       category,
       user,
     });
+
     return await this.blogRepository.save(newBlog);
   }
+
 
   async getBlogs(
     model: SearchWithPaginationDto,
@@ -111,6 +127,7 @@ export class BlogsService {
     if (!model) {
       throw new CustomHttpException(HttpStatus.NOT_FOUND, 'You need to send data');
     }
+
     const blog = await this.getBlog(id);
 
     if (!blog) {
@@ -118,6 +135,11 @@ export class BlogsService {
         HttpStatus.NOT_FOUND,
         `A blog with this id: "${id}" does not exist`,
       );
+    }
+
+    // Chỉ cho phép cập nhật nếu là chủ sở hữu
+    if (blog.user.id !== user.id) {
+      throw new CustomHttpException(HttpStatus.FORBIDDEN, 'Bạn không có quyền cập nhật bài viết này');
     }
 
     if (model.title) {
@@ -132,19 +154,22 @@ export class BlogsService {
       }
     }
 
-    // Chỉ cập nhật các trường được truyền vào
     const updatedBlog = Object.assign(blog, model, { updatedAt: new Date() });
 
     return await this.blogRepository.save(updatedBlog);
   }
 
-  async deleteBlog(id: string): Promise<boolean> {
+
+  async deleteBlog(id: string, userId: string): Promise<boolean> {
     const blog = await this.getBlog(id);
     if (!blog) {
       throw new CustomHttpException(
         HttpStatus.BAD_REQUEST,
         `A blog with this id: "${id}" not exists`,
       );
+    }
+    if (blog.user.id !== userId) {
+      throw new CustomHttpException(HttpStatus.FORBIDDEN, 'Bạn không có quyền xóa bài viết này');
     }
     await this.blogRepository.update(id, { isPublished: 0 });
     return true;
