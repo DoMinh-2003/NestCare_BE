@@ -27,6 +27,8 @@ export enum AppointmentStatus {
   COMPLETED = 'COMPLETED', // Đã hoàn tất
   CANCELED = 'CANCELED', // Đã hủy
   FAIL = 'FAIL', // 
+  NO_SHOW = 'NO_SHOW', // Bệnh nhân không đến
+  REFUNDED = 'REFUNDED', // Đã hoàn tiền
 }
 
 @Entity('appointments')
@@ -45,7 +47,7 @@ export class Appointment {
   appointmentDate: Date;
 
 
-  @ManyToOne(() => Slot, (slot) => slot.appointments)
+  @ManyToOne(() => Slot, (slot) => slot.appointments,{ eager: true })
   slot: Slot; // Thêm mối quan hệ với Slot
 
   @Column({

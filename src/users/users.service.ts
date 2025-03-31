@@ -12,7 +12,7 @@ import { RegisterUserDto } from './dto/RegisterUserDto';
 import { UpdateUserDTO } from './dto/UpdateUserDTO';
 import { SearchWithPaginationDto } from './dto/searchWithPagination.dto';
 import { UserPackageServiceUsage } from './model/userPackageServiceUsage.entity';
-import { Appointment } from 'src/appointment/entities/appointment.entity';
+import { Appointment, AppointmentStatus } from 'src/appointment/entities/appointment.entity';
 
 @Injectable()
 export class UsersService {
@@ -234,11 +234,12 @@ export class UsersService {
       where: { role: Role.Doctor, isDeleted: false },
     });
 
-    // 2. Lấy tất cả các cuộc hẹn đã được đặt trong ngày và khung giờ cụ thể
+    // 2. Lấy tất cả các cuộc hẹn ĐANG CHỜ XÁC NHẬN (PENDING) đã được đặt trong ngày và khung giờ cụ thể
     const bookedAppointments = await this.appointmentRepo.find({
       where: {
         appointmentDate: Between(startOfDay, endOfDay),
         slot: { id: slotId },
+        status: AppointmentStatus.PENDING, // Thêm điều kiện status là PENDING
       },
       relations: ['doctor'], // Để có thể truy cập thông tin bác sĩ
     });

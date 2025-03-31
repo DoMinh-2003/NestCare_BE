@@ -12,6 +12,8 @@ export enum AppointmentHistoryStatus {
   COMPLETED = 'COMPLETED', // Đã hoàn tất
   CANCELED = 'CANCELED', // Đã hủy
   FAIL = 'FAIL', // 
+  NO_SHOW = 'NO_SHOW', // Bệnh nhân không đến
+  REFUNDED = 'REFUNDED', // Đã hoàn tiền
 }
 
 @Entity()
