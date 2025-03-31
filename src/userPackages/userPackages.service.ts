@@ -17,6 +17,9 @@ import { UserPackageServiceUsage } from 'src/users/model/userPackageServiceUsage
 import { SchedulerRegistry } from '@nestjs/schedule';
 import { MailService } from 'src/common/service/mail.service';
 import { PackagesService } from 'src/packages/packages.service';
+import { TransactionService } from 'src/transaction/transaction.service';
+import { TransactionStatus, TransactionType } from 'src/transaction/entities/transaction.entity';
+
 
 @Injectable()
 export class UserPackagesService {
@@ -40,7 +43,10 @@ export class UserPackagesService {
     private vnpayService: VnpayService, // Inject VnpayService vào constructor
 
     private mailService: MailService,
-  ) { }
+
+
+    private transactionService: TransactionService, // Inject TransactionService
+  ) {}
 
   // Mua gói dịch vụ cho thai nhi
   async purchasePackage(userId: string, packageId: string) {
@@ -171,6 +177,15 @@ export class UserPackagesService {
 
       userPackage.isActive = true; // Kích hoạt gói sau khi thanh toán
       await this.setUserPackageInactiveSchedule(userPackage, packageEntity);
+
+      await this.transactionService.create({
+        userId: user.id,
+        type: TransactionType.PURCHASE_PACKAGE,
+        status: TransactionStatus.SUCCESS,
+        amount: packageEntity.price,
+        description: `Mua gói dịch vụ: ${packageEntity.name}`,
+        userPackageId: userPackage.id,
+      });
     }
 
     return await this.userPackagesRepository.save(userPackage);
