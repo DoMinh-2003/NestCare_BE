@@ -36,6 +36,8 @@ import {
 } from 'src/transaction/entities/transaction.entity';
 import { TransactionService } from 'src/transaction/transaction.service';
 import { ServiceBilling } from './entities/service-billing.entity';
+import { SchedulerRegistry } from '@nestjs/schedule';
+import { Role } from 'src/common/enums/role.enum';
 
 @Injectable()
 export class AppointmentService {
@@ -90,7 +92,94 @@ export class AppointmentService {
     private mailService: MailService,
 
     private transactionService: TransactionService,
+
+     private schedulerRegistry: SchedulerRegistry,
   ) {}
+
+  private async scheduleNoShowCheck(appointment: Appointment,fetalRecord: FetalRecord, doctor: User) {
+    this.mailService.sendWelcomeEmail(
+
+      fetalRecord.mother.email,
+      
+      'Xác Nhận Lịch Khám Bệnh Viện',
+      
+      `Chào bạn ${fetalRecord.mother.fullName},
+      
+      
+      
+      Lịch khám của bạn đã được đặt thành công vào ngày ${appointment.appointmentDate.toLocaleDateString()} lúc ${appointment.slot.startTime} với bác sĩ ${doctor.fullName}.
+      
+      
+      
+      **Lưu ý quan trọng:**
+      
+      - Vui lòng đến sớm trước giờ hẹn 15 phút để làm thủ tục check-in.
+      
+      - Nếu bạn đến muộn quá 15 phút so với giờ hẹn, lịch khám có thể bị hủy.
+      
+      
+      
+      Vui lòng liên hệ với chúng tôi nếu bạn có bất kỳ thay đổi nào.
+      
+      
+      
+      Cảm ơn bạn đã tin tưởng dịch vụ của chúng tôi.`,
+      
+      );
+    const now = new Date();
+    const appointmentTime = new Date(appointment.appointmentDate);
+    const [startHourSchedule, startMinuteSchedule] = appointment.slot.startTime
+      .split(':')
+      .map(Number);
+    appointmentTime.setHours(startHourSchedule, startMinuteSchedule, 0, 0);
+
+    const fifteenMinutesAfter = new Date(appointmentTime);
+    fifteenMinutesAfter.setMinutes(fifteenMinutesAfter.getMinutes() + 15);
+
+    const jobName = `noShowCheck-${appointment.id}`;
+
+    this.schedulerRegistry.addTimeout(
+      jobName,
+      setTimeout(async () => {
+        const appointmentToCheck = await this.appointmentRepo.findOne({
+          where: { id: appointment.id },
+          relations: ['fetalRecords', 'fetalRecords.mother', 'doctor'], // Load relations for email
+        });
+        if (
+          appointmentToCheck &&
+          appointmentToCheck.status === AppointmentStatus.PENDING 
+        ) {
+          appointmentToCheck.status = AppointmentStatus.NO_SHOW;
+          await this.appointmentRepo.save(appointmentToCheck);
+
+          const appointmentHistoryEntry = this.appointmentHistoryRepo.create({
+            appointment: appointmentToCheck,
+            status: AppointmentHistoryStatus.NO_SHOW,
+            notes:
+              'Hệ thống tự động chuyển trạng thái thành Không đến do quá 15 phút sau giờ hẹn mà chưa check-in.',
+          });
+          await this.appointmentHistoryRepo.save(appointmentHistoryEntry);
+
+          console.log(`Appointment ${appointment.id} marked as NO_SHOW.`);
+            // Gửi email thông báo hủy lịch do không đến
+            if (appointmentToCheck.fetalRecords && appointmentToCheck.fetalRecords.length > 0 && appointmentToCheck.fetalRecords[0].mother) {
+              this.mailService.sendWelcomeEmail(
+                appointmentToCheck.fetalRecords[0].mother.email,
+                'Thông Báo Hủy Lịch Khám Bệnh Viện',
+                `Chào bạn ${appointmentToCheck.fetalRecords[0].mother.fullName},
+  
+  Chúng tôi rất tiếc phải thông báo rằng lịch khám của bạn vào ngày ${appointmentToCheck.appointmentDate.toLocaleDateString()} lúc ${appointmentToCheck.slot.startTime} với bác sĩ ${appointmentToCheck.doctor.fullName} đã bị hủy do bạn không đến trong vòng 15 phút sau giờ hẹn.
+  
+  Nếu bạn vẫn có nhu cầu khám, vui lòng đặt lịch hẹn mới.
+  
+  Cảm ơn bạn.`,
+              );
+            }
+        }
+        this.schedulerRegistry.deleteTimeout(jobName); // Xóa timeout sau khi chạy
+      }, fifteenMinutesAfter.getTime() - now.getTime()), // Tính toán độ trễ
+    );
+  }
 
   async bookAppointment(
     fetalRecords: { fetalRecordId: string }[],
@@ -127,6 +216,7 @@ export class AppointmentService {
         doctor: { id: doctorId },
         appointmentDate: Between(startOfDay, endOfDay), // Compare only the date part for existing appointments
         slot: { id: slotId },
+        status: AppointmentStatus.PENDING,
       },
     });
 
@@ -154,6 +244,7 @@ export class AppointmentService {
             fetalRecords: { id: fetalRecord.id },
             appointmentDate: Between(startOfDay, endOfDay),
             slot: { id: slotId },
+            status: AppointmentStatus.PENDING,
           },
         });
 
@@ -211,13 +302,10 @@ export class AppointmentService {
     });
     await this.appointmentHistoryRepo.save(appointmentHistory);
 
-    this.mailService.sendWelcomeEmail(
-      doctor.email,
-      'Xác Nhận Lịch Khám Ngày ' + date.toLocaleDateString(),
-      'Có lịch khám mới vào ngày ' +
-        date.toLocaleDateString() +
-        '. Vui lòng xác nhận.',
-    );
+    if (appointmentStatus === AppointmentStatus.PENDING) {
+      // Lên lịch kiểm tra và chuyển trạng thái NO_SHOW bằng hàm riêng
+      this.scheduleNoShowCheck(savedAppointment, fetalRecord, doctor);
+    }
 
     return paymentUrl ? paymentUrl : savedAppointment;
   }
@@ -289,6 +377,7 @@ export class AppointmentService {
         'doctor',
         'fetalRecords.mother',
         'serviceBilling',
+        'slot',
         'serviceBilling.appointmentServices',
         'serviceBilling.appointmentServices.service',
       ], // Eager load serviceBilling và các dịch vụ
@@ -330,6 +419,22 @@ export class AppointmentService {
       AppointmentStatus.CANCELED.toLocaleLowerCase() ===
       status.toLocaleLowerCase()
     ) {
+
+      if (changedBy && changedBy.role === Role.User) {
+        const appointmentDateTime = new Date(appointment.appointmentDate);
+        const [startHour, startMinute] = appointment.slot.startTime.split(':').map(Number);
+        appointmentDateTime.setHours(startHour, startMinute, 0, 0);
+
+        const now = new Date();
+        const timeDifferenceInMilliseconds = appointmentDateTime.getTime() - now.getTime();
+        const timeDifferenceInHours = timeDifferenceInMilliseconds / (1000 * 60 * 60);
+
+        if (timeDifferenceInHours < 24) {
+          throw new BadRequestException(
+            'Bạn chỉ có thể hủy lịch hẹn trước 24 giờ so với thời gian đã đặt.',
+          );
+        }
+        }
       note = reason;
       const date = appointment.appointmentDate;
 
@@ -351,6 +456,8 @@ export class AppointmentService {
         description: `Thanh toán cọc thành công cho lịch hẹn ${appointmentId}`,
         appointmentId: appointment.id,
       });
+      this.scheduleNoShowCheck(appointment, appointment.fetalRecords[0], appointment.doctor);
+
     } else if (
       AppointmentStatus.IN_PROGRESS.toLocaleLowerCase() ===
       status.toLocaleLowerCase()
@@ -819,24 +926,27 @@ export class AppointmentService {
     endOfDay.setHours(23, 59, 59, 999);
 
     const queryBuilder = this.appointmentRepo
-    .createQueryBuilder('appointment')
-    .leftJoinAndSelect('appointment.fetalRecords', 'fetalRecord')
-    .leftJoinAndSelect('fetalRecord.checkupRecords', 'checkupRecord')
-    .leftJoinAndSelect('appointment.doctor', 'doctor')
-    .leftJoinAndSelect('appointment.serviceBilling', 'serviceBilling')
-    // Truy cập AppointmentServiceEntity thông qua serviceBilling
-    .leftJoinAndSelect('serviceBilling.appointmentServices', 'appointmentServices')
-    .leftJoinAndSelect('appointmentServices.service', 'service') // Load thông tin dịch vụ của AppointmentService
-    .leftJoinAndSelect('appointment.medicationBills', 'medicationBills')
-    .leftJoinAndSelect('fetalRecord.mother', 'mother')
-    .leftJoinAndSelect('appointment.slot', 'slot')
-    .leftJoinAndSelect('appointment.history', 'history')
-    .leftJoinAndSelect('history.changedBy', 'changedBy')
-    .where('appointment.doctor.id = :doctorId', { doctorId })
-    .andWhere(
-      'appointment.appointmentDate BETWEEN :startOfDay AND :endOfDay',
-      { startOfDay, endOfDay },
-    );
+      .createQueryBuilder('appointment')
+      .leftJoinAndSelect('appointment.fetalRecords', 'fetalRecord')
+      .leftJoinAndSelect('fetalRecord.checkupRecords', 'checkupRecord')
+      .leftJoinAndSelect('appointment.doctor', 'doctor')
+      .leftJoinAndSelect('appointment.serviceBilling', 'serviceBilling')
+      // Truy cập AppointmentServiceEntity thông qua serviceBilling
+      .leftJoinAndSelect(
+        'serviceBilling.appointmentServices',
+        'appointmentServices',
+      )
+      .leftJoinAndSelect('appointmentServices.service', 'service') // Load thông tin dịch vụ của AppointmentService
+      .leftJoinAndSelect('appointment.medicationBills', 'medicationBills')
+      .leftJoinAndSelect('fetalRecord.mother', 'mother')
+      .leftJoinAndSelect('appointment.slot', 'slot')
+      .leftJoinAndSelect('appointment.history', 'history')
+      .leftJoinAndSelect('history.changedBy', 'changedBy')
+      .where('appointment.doctor.id = :doctorId', { doctorId })
+      .andWhere(
+        'appointment.appointmentDate BETWEEN :startOfDay AND :endOfDay',
+        { startOfDay, endOfDay },
+      );
 
     if (status) {
       queryBuilder.andWhere('appointment.status = :status', { status });
@@ -863,23 +973,26 @@ export class AppointmentService {
     endOfDay.setHours(23, 59, 59, 999);
 
     const queryBuilder = this.appointmentRepo
-    .createQueryBuilder('appointment')
-    .leftJoinAndSelect('appointment.fetalRecords', 'fetalRecord')
-    .leftJoinAndSelect('fetalRecord.checkupRecords', 'checkupRecord')
-    .leftJoinAndSelect('appointment.doctor', 'doctor')
-    .leftJoinAndSelect('appointment.serviceBilling', 'serviceBilling')
-    // Truy cập AppointmentServiceEntity thông qua serviceBilling
-    .leftJoinAndSelect('serviceBilling.appointmentServices', 'appointmentServices')
-    .leftJoinAndSelect('appointmentServices.service', 'service') // Load thông tin dịch vụ của AppointmentService
-    .leftJoinAndSelect('appointment.medicationBills', 'medicationBills')
-    .leftJoinAndSelect('fetalRecord.mother', 'mother')
-    .leftJoinAndSelect('appointment.slot', 'slot')
-    .leftJoinAndSelect('appointment.history', 'history')
-    .leftJoinAndSelect('history.changedBy', 'changedBy')
-    .andWhere(
-      'appointment.appointmentDate BETWEEN :startOfDay AND :endOfDay',
-      { startOfDay, endOfDay },
-    );
+      .createQueryBuilder('appointment')
+      .leftJoinAndSelect('appointment.fetalRecords', 'fetalRecord')
+      .leftJoinAndSelect('fetalRecord.checkupRecords', 'checkupRecord')
+      .leftJoinAndSelect('appointment.doctor', 'doctor')
+      .leftJoinAndSelect('appointment.serviceBilling', 'serviceBilling')
+      // Truy cập AppointmentServiceEntity thông qua serviceBilling
+      .leftJoinAndSelect(
+        'serviceBilling.appointmentServices',
+        'appointmentServices',
+      )
+      .leftJoinAndSelect('appointmentServices.service', 'service') // Load thông tin dịch vụ của AppointmentService
+      .leftJoinAndSelect('appointment.medicationBills', 'medicationBills')
+      .leftJoinAndSelect('fetalRecord.mother', 'mother')
+      .leftJoinAndSelect('appointment.slot', 'slot')
+      .leftJoinAndSelect('appointment.history', 'history')
+      .leftJoinAndSelect('history.changedBy', 'changedBy')
+      .andWhere(
+        'appointment.appointmentDate BETWEEN :startOfDay AND :endOfDay',
+        { startOfDay, endOfDay },
+      );
 
     if (status) {
       queryBuilder.andWhere('appointment.status = :status', { status });
