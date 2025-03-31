@@ -66,7 +66,7 @@ export class TransactionService {
   async findAllByUser(userId: string) {
     return this.transactionRepo.find({
       where: { user: { id: userId } },
-      relations: ['user', 'appointment', 'userPackage'], // Eager load relations if needed
+      relations: ['user', 'appointment', 'userPackage', 'serviceBilling'],
       order: { createdAt: 'DESC' },
     });
   }
@@ -74,7 +74,7 @@ export class TransactionService {
   async findOne(id: string) {
     return this.transactionRepo.findOne({
       where: { id },
-      relations: ['user', 'appointment', 'userPackage'],
+      relations: ['user', 'appointment', 'userPackage', 'serviceBilling'],
     });
   }
 
