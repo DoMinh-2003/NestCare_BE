@@ -26,7 +26,7 @@ export class FetalRecordsController {
     return await this.fetalRecordsService.findAllByUserId(userId);
   }
 
-  @Get('/:motherId')
+  @Get(':motherId')
   @ApiParam({
     name: 'motherId',
     description: 'Trạng thái của Appointments',
@@ -47,7 +47,7 @@ export class FetalRecordsController {
 
 
   // API để tìm hồ sơ thai nhi theo ID
-  @Get(':id')
+  @Get('detail/:id')
   async findById(@Param('id') id: string) {
     return await this.fetalRecordsService.findById(id);
   }
