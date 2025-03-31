@@ -30,6 +30,12 @@ import {
   AppointmentHistory,
   AppointmentHistoryStatus,
 } from './entities/appointmentHistory.entity';
+import {
+  TransactionStatus,
+  TransactionType,
+} from 'src/transaction/entities/transaction.entity';
+import { TransactionService } from 'src/transaction/transaction.service';
+import { ServiceBilling } from './entities/service-billing.entity';
 
 @Injectable()
 export class AppointmentService {
@@ -76,9 +82,14 @@ export class AppointmentService {
     @InjectRepository(Slot)
     private slotRepo: Repository<Slot>,
 
+    @InjectRepository(ServiceBilling)
+    private serviceBillingRepo: Repository<ServiceBilling>,
+
     private vnpayService: VnpayService,
 
     private mailService: MailService,
+
+    private transactionService: TransactionService,
   ) {}
 
   async bookAppointment(
@@ -171,8 +182,6 @@ export class AppointmentService {
       appointmentStatus = AppointmentStatus.AWAITING_DEPOSIT;
     }
 
-    console.log(appointmentStatus);
-
     const appointment = this.appointmentRepo.create({
       fetalRecords: fetalRecordEntities,
       doctor,
@@ -182,7 +191,7 @@ export class AppointmentService {
     });
 
     const savedAppointment = await this.appointmentRepo.save(appointment);
-console.log("savedAppointment", savedAppointment);
+
     if (appointmentStatus === AppointmentStatus.AWAITING_DEPOSIT) {
       const depositAmount = 50000;
       const bookingId = savedAppointment.id;
@@ -275,7 +284,7 @@ console.log("savedAppointment", savedAppointment);
   ) {
     const appointment = await this.appointmentRepo.findOne({
       where: { id: appointmentId },
-      relations: ['fetalRecords', 'doctor', 'fetalRecords.mother'], // Cập nhật relations
+      relations: ['fetalRecords', 'doctor', 'fetalRecords.mother', 'serviceBilling', 'serviceBilling.appointmentServices', 'serviceBilling.appointmentServices.service'], // Eager load serviceBilling và các dịch vụ
     });
     if (!appointment) throw new NotFoundException('Appointment not found');
 
@@ -323,6 +332,68 @@ console.log("savedAppointment", savedAppointment);
         'Lịch Khám Vào Ngày ' + date + ' Đã Bị Từ Chối',
         `Vì lí do: ${reason}. Nên bạn hãy vô đặt lại lịch khám khác`,
       );
+    } else if (
+      AppointmentStatus.PENDING.toLocaleLowerCase() ===
+      status.toLocaleLowerCase()
+    ) {
+      await this.transactionService.create({
+        userId: appointment.fetalRecords[0].mother.id,
+        type: TransactionType.DEPOSIT,
+        status: TransactionStatus.SUCCESS,
+        amount: 50000,
+        description: `Thanh toán cọc thành công cho lịch hẹn ${appointmentId}`,
+        appointmentId: appointment.id,
+      });
+    } else if (
+      AppointmentStatus.IN_PROGRESS.toLocaleLowerCase() ===
+      status.toLocaleLowerCase()
+    ) {
+      const appointmentHistory = this.appointmentHistoryRepo.create({
+        appointment,
+        status: AppointmentStatus.IN_PROGRESS as any,
+        changedBy,
+      });
+      await this.appointmentHistoryRepo.save(appointmentHistory);
+
+      appointment.status = AppointmentStatus.IN_PROGRESS;
+      const newAppointment = await this.appointmentRepo.save(appointment);
+
+      const totalAmountWithoutPackage = appointment.serviceBilling.totalAmount;
+
+      if (totalAmountWithoutPackage > 0) {
+        await this.transactionService.create({
+          userId: appointment.fetalRecords[0].mother.id,
+          type: TransactionType.SERVICE_PAYMENT,
+          status: TransactionStatus.SUCCESS,
+          amount: totalAmountWithoutPackage,
+          description: `Thanh toán cho các dịch vụ phát sinh trong cuộc hẹn ${appointmentId}`,
+          serviceBillingId: appointment.serviceBilling.id,
+        });
+      }
+
+      const appointmentHistoryList = await this.appointmentHistoryRepo.find({
+        where: { appointment: { id: appointmentId } },
+        order: { createdAt: 'ASC' },
+      });
+
+      const wasAwaitingDeposit = appointmentHistoryList.some(
+        (history) => history.status === AppointmentHistoryStatus.AWAITING_DEPOSIT,
+      );
+
+      if (wasAwaitingDeposit) {
+        const depositAmount = 50000;
+        // const discountAmount = Math.min(depositAmount, totalAmountWithoutPackage);
+
+        await this.transactionService.create({
+          userId: appointment.fetalRecords[0].mother.id,
+          type: TransactionType.DEPOSIT_USAGE,
+          status: TransactionStatus.SUCCESS,
+          amount: depositAmount,
+          description: `Sử dụng tiền cọc cho cuộc hẹn ${appointmentId}`,
+          serviceBillingId: appointment.serviceBilling.id,
+        });
+
+      }
     }
 
     const appointmentHistory = this.appointmentHistoryRepo.create({
@@ -373,64 +444,132 @@ console.log("savedAppointment", savedAppointment);
     servicesUsed: ServiceUsedDto[],
     changedBy?: User,
   ) {
-    console.log(appointmentId);
-
     const appointment = await this.appointmentRepo.findOne({
       where: { id: appointmentId },
-      relations: ['fetalRecords', 'doctor', 'fetalRecords.mother'], // Cập nhật relations
+      relations: ['fetalRecords', 'doctor', 'fetalRecords.mother', 'serviceBilling'], // Load cả serviceBilling
     });
 
     if (!appointment) throw new NotFoundException('Appointment not found');
 
-    // Lấy user từ fetalRecords đầu tiên (giả định tất cả fetalRecords liên quan đến cùng một mẹ)
+    // Kiểm tra xem appointment đã có ServiceBilling chưa
+    if (appointment.serviceBilling) {
+      throw new BadRequestException(
+        `Appointment ${appointmentId} đã có ServiceBilling với ID ${appointment.serviceBilling.id}. Không thể tạo mới.`,
+      );
+    }
+
     const user = appointment.fetalRecords[0].mother;
 
-    // 🔹 Lấy danh sách dịch vụ mà user đã mua từ UserPackageServiceUsage
     const userServiceUsages = await this.userPackageServiceUsageRepo.find({
       where: { user, slot: MoreThan(0) },
       relations: ['service'],
     });
 
-    let totalCost = 0;
-    const appointmentServices = await Promise.all(
-      servicesUsed.map(async (serviceUsed) => {
-        const service = await this.serviceRepo.findOne({
-          where: { id: serviceUsed.serviceId },
-        });
-        if (!service)
-          throw new NotFoundException(
-            `Service ${serviceUsed.serviceId} not found`,
-          );
+    const serviceBilling = this.serviceBillingRepo.create({
+      appointment: appointment,
+    });
+    const savedServiceBilling =
+      await this.serviceBillingRepo.save(serviceBilling);
 
-        let price = service.price;
-        let isInPackage = false;
+    let totalAmountWithoutPackage: number = 0;
+    const appointmentServices: AppointmentServiceEntity[] = [];
 
-        // 🔹 Tìm dịch vụ trong danh sách UserPackageServiceUsage
-        const userServiceUsage = userServiceUsages.find(
-          (usage) => usage.service.id === service.id && usage.slot > 0,
+    for (const serviceUsed of servicesUsed) {
+      const service = await this.serviceRepo.findOne({
+        where: { id: serviceUsed.serviceId },
+      });
+      if (!service)
+        throw new NotFoundException(
+          `Service ${serviceUsed.serviceId} not found`,
         );
 
-        if (userServiceUsage) {
-          userServiceUsage.slot--; // Trừ lượt sử dụng
-          await this.userPackageServiceUsageRepo.save(userServiceUsage);
-          price = 0; // Miễn phí nếu còn slot
-          isInPackage = true;
-        } else {
-          totalCost += service.price; // Nếu không có trong gói hoặc hết slot -> tính tiền
-        }
+      let price = parseFloat(service.price as any);
+      console.log(`Giá dịch vụ ${service.name}:`, price); // Thêm dòng này
+      let isInPackage = false;
 
-        return this.appointmentServiceRepo.create({
-          appointment,
-          service,
-          price,
-          isInPackage, // Cập nhật trạng thái có trong gói hay không
-          notes: serviceUsed.notes || '',
-        });
-      }),
+      const userServiceUsage = userServiceUsages.find(
+        (usage) => usage.service.id === service.id && usage.slot > 0,
+      );
+
+      if (userServiceUsage) {
+        userServiceUsage.slot--;
+        await this.userPackageServiceUsageRepo.save(userServiceUsage);
+        price = 0;
+        isInPackage = true;
+      } else {
+        totalAmountWithoutPackage += price
+      }
+
+      const newAppointmentService = this.appointmentServiceRepo.create({
+        service,
+        price,
+        isInPackage,
+        notes: serviceUsed.notes || '',
+        serviceBilling: savedServiceBilling,
+      });
+      const savedAppointmentService = await this.appointmentServiceRepo.save(
+        newAppointmentService,
+      );
+      console.log("app servicer",savedAppointmentService);
+
+      appointmentServices.push(savedAppointmentService);
+    }
+
+    // Tạo transaction tổng cho các dịch vụ không nằm trong gói
+    // if (totalAmountWithoutPackage > 0) {
+    //   await this.transactionService.create({
+    //     userId: user.id,
+    //     type: TransactionType.SERVICE_PAYMENT,
+    //     status: TransactionStatus.SUCCESS,
+    //     amount: totalAmountWithoutPackage,
+    //     description: `Thanh toán cho các dịch vụ phát sinh trong cuộc hẹn ${appointmentId}`,
+    //     serviceBillingId: savedServiceBilling.id,
+    //   });
+    // }
+    console.log('Tổng tiền không bao gồm gói:', totalAmountWithoutPackage);
+
+    let finalAmount = totalAmountWithoutPackage;
+    let discountAmount = 0;
+
+    const appointmentHistoryList = await this.appointmentHistoryRepo.find({
+      where: { appointment: { id: appointmentId } },
+      order: { createdAt: 'ASC' },
+    });
+
+    const wasAwaitingDeposit = appointmentHistoryList.some(
+      (history) => history.status === AppointmentHistoryStatus.AWAITING_DEPOSIT,
     );
 
-    const newAppointmentServices =
-      await this.appointmentServiceRepo.save(appointmentServices);
+    if (wasAwaitingDeposit) {
+      const depositAmount = 50000;
+      discountAmount = depositAmount;
+      finalAmount = Math.max(0, totalAmountWithoutPackage - depositAmount);
+
+      // await this.transactionService.create({
+      //   userId: user.id,
+      //   type: TransactionType.DEPOSIT_USAGE,
+      //   status: TransactionStatus.SUCCESS,
+      //   amount: discountAmount,
+      //   description: `Sử dụng tiền cọc cho cuộc hẹn ${appointmentId}`,
+      //   serviceBillingId: savedServiceBilling.id,
+      // });
+    }
+
+    savedServiceBilling.totalAmount = totalAmountWithoutPackage;
+    savedServiceBilling.discountAmount = discountAmount;
+    savedServiceBilling.finalAmount = finalAmount;
+    await this.serviceBillingRepo.save(savedServiceBilling);
+
+    if (finalAmount > 0) {
+      const amountToPay = finalAmount * 100;
+      const param = `?appointmentId=${appointment.id}`;
+      const paymentUrl = await this.vnpayService.createPayment(
+        appointment.id,
+        param,
+        amountToPay.toString(),
+      );
+      return paymentUrl;
+    }
 
     const appointmentHistory = this.appointmentHistoryRepo.create({
       appointment,
@@ -438,24 +577,13 @@ console.log("savedAppointment", savedAppointment);
       changedBy,
     });
     await this.appointmentHistoryRepo.save(appointmentHistory);
-
+    console.log("111");
     appointment.status = AppointmentStatus.IN_PROGRESS;
     const newAppointment = await this.appointmentRepo.save(appointment);
-
-    if (totalCost > 0) {
-      totalCost *= 100;
-      const param = `?appointmentId=${newAppointment.id}`;
-      return await this.vnpayService.createPayment(
-        newAppointment.id,
-        param,
-        totalCost.toString(),
-      );
-    }
-
     return {
-      appointment,
-      totalCost,
-      services: newAppointmentServices,
+      appointment: newAppointment,
+      bill: savedServiceBilling,
+      // services: appointmentServices,
     };
   }
 
@@ -577,8 +705,9 @@ console.log("savedAppointment", savedAppointment);
       relations: [
         'appointments',
         'appointments.doctor',
-        'appointments.appointmentServices',
-        'appointments.appointmentServices.service',
+        'appointments.serviceBilling',
+        'appointments.serviceBilling.appointmentServices',
+        'appointments.serviceBilling.appointmentServices.service',
         'appointments.medicationBills',
         'appointments.fetalRecords', // Cập nhật relations
         'appointments.slot',
@@ -602,8 +731,8 @@ console.log("savedAppointment", savedAppointment);
         'fetalRecords', // Cập nhật relations
         'fetalRecords.checkupRecords',
         'doctor',
-        'appointmentServices',
-        'appointmentServices.service',
+        'serviceBilling.appointmentServices',
+        'serviceBilling.appointmentServices.service',
         'medicationBills',
         'fetalRecords.mother',
         'history',
@@ -656,7 +785,8 @@ console.log("savedAppointment", savedAppointment);
         'fetalRecords', // Cập nhật relations
         'fetalRecords.checkupRecords',
         'doctor',
-        'appointmentServices',
+        'serviceBilling.appointmentServices',
+        'serviceBilling.appointmentServices.service',
         'medicationBills',
         'fetalRecords.mother',
         'history',
@@ -682,8 +812,10 @@ console.log("savedAppointment", savedAppointment);
       .leftJoinAndSelect('appointment.fetalRecords', 'fetalRecord')
       .leftJoinAndSelect('fetalRecord.checkupRecords', 'checkupRecord')
       .leftJoinAndSelect('appointment.doctor', 'doctor')
+      .leftJoinAndSelect('appointment.serviceBilling', 'serviceBilling')
+      // Join với AppointmentServiceEntity thông qua ServiceBilling
       .leftJoinAndSelect(
-        'appointment.appointmentServices',
+        'serviceBilling.appointmentServices',
         'appointmentServices',
       )
       .leftJoinAndSelect('appointment.medicationBills', 'medicationBills')
@@ -726,8 +858,10 @@ console.log("savedAppointment", savedAppointment);
       .leftJoinAndSelect('appointment.fetalRecords', 'fetalRecord')
       .leftJoinAndSelect('fetalRecord.checkupRecords', 'checkupRecord')
       .leftJoinAndSelect('appointment.doctor', 'doctor')
+      .leftJoinAndSelect('appointment.serviceBilling', 'serviceBilling')
+      // Join với AppointmentServiceEntity thông qua ServiceBilling
       .leftJoinAndSelect(
-        'appointment.appointmentServices',
+        'serviceBilling.appointmentServices',
         'appointmentServices',
       )
       .leftJoinAndSelect('appointment.medicationBills', 'medicationBills')
@@ -752,5 +886,79 @@ console.log("savedAppointment", savedAppointment);
     }
 
     return queryBuilder.getMany();
+  }
+
+  async previewCheckup(appointmentId: string, servicesUsed: ServiceUsedDto[]) {
+    const appointment = await this.appointmentRepo.findOne({
+      where: { id: appointmentId },
+      relations: ['fetalRecords', 'fetalRecords.mother'],
+    });
+
+    if (!appointment) throw new NotFoundException('Appointment not found');
+
+    const user = appointment.fetalRecords[0].mother;
+
+    const userServiceUsages = await this.userPackageServiceUsageRepo.find({
+      where: { user, slot: MoreThan(0), order: { isActive: true } },
+      relations: ['service', 'order'],
+    });
+
+    let totalCostWithoutPackage = 0;
+    const servicePreviews: {
+      id: string;
+      name: string;
+      price: number;
+      isInPackage: boolean;
+    }[] = [];
+
+    for (const serviceUsed of servicesUsed) {
+      const service = await this.serviceRepo.findOne({
+        where: { id: serviceUsed.serviceId },
+      });
+      if (!service)
+        throw new NotFoundException(
+          `Service ${serviceUsed.serviceId} not found`,
+        );
+
+      const price = Number(service.price); // Chuyển đổi giá sang number
+      let isInPackage = false;
+
+      for (const usage of userServiceUsages) {
+        if (usage.service.id === service.id && usage.slot > 0) {
+          isInPackage = true;
+          break;
+        }
+      }
+
+      if (!isInPackage) {
+        totalCostWithoutPackage += price; // Cộng giá trị number
+      }
+
+      servicePreviews.push({
+        id: service.id,
+        name: service.name,
+        price,
+        isInPackage,
+      });
+    }
+
+    const appointmentHistoryList = await this.appointmentHistoryRepo.find({
+      where: { appointment: { id: appointmentId } },
+      order: { createdAt: 'ASC' },
+    });
+
+    const wasAwaitingDeposit = appointmentHistoryList.some(
+      (history) => history.status === AppointmentHistoryStatus.AWAITING_DEPOSIT,
+    );
+
+    const depositAmount = wasAwaitingDeposit ? 50000 : 0;
+    const finalCost = Math.max(0, totalCostWithoutPackage - depositAmount); // Tính toán finalCost
+
+    return {
+      services: servicePreviews,
+      totalCostWithoutPackage,
+      depositAmount,
+      finalCost,
+    };
   }
 }

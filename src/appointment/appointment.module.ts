@@ -18,11 +18,37 @@ import { Medication } from 'src/medication/medication.entity';
 import { UserPackageServiceUsage } from 'src/users/model/userPackageServiceUsage.entity';
 import { AppointmentHistory } from './entities/appointmentHistory.entity';
 import { Slot } from 'src/slots/entities/slot.entity';
-
+import { TransactionService } from 'src/transaction/transaction.service';
+import { TransactionModule } from 'src/transaction/transaction.module';
+import { ServiceBilling } from './entities/service-billing.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Slot, UserPackageServiceUsage, AppointmentHistory ,Appointment, FetalRecord, Medication, User, CheckupRecord, AppointmentServiceEntity, UserPackages, PackageService, Services, MedicationBillDetail, MedicationBill])],
+  imports: [
+    TypeOrmModule.forFeature([
+      Slot,
+      UserPackageServiceUsage,
+      AppointmentHistory,
+      Appointment,
+      FetalRecord,
+      Medication,
+      User,
+      CheckupRecord,
+      AppointmentServiceEntity,
+      UserPackages,
+      PackageService,
+      Services,
+      MedicationBillDetail,
+      MedicationBill,
+      ServiceBilling
+    ]),
+    TransactionModule,
+  ],
   controllers: [AppointmentController],
-  providers: [AppointmentService,VnpayService,MailService],
+  providers: [
+    AppointmentService,
+    VnpayService,
+    MailService,
+    TransactionService,
+  ],
 })
 export class AppointmentModule {}

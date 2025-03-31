@@ -8,13 +8,29 @@ import { User } from 'src/users/model/user.entity';
 import { VnpayService } from 'src/common/service/vnpay.service';
 import { UserPackageServiceUsage } from 'src/users/model/userPackageServiceUsage.entity';
 import { MailService } from 'src/common/service/mail.service';
-
+import { TransactionService } from 'src/transaction/transaction.service';
+import { TransactionModule } from 'src/transaction/transaction.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([UserPackageServiceUsage, UserPackages, Packages , User, UserPackageServiceUsage]),
+    TypeOrmModule.forFeature(
+      [
+        UserPackageServiceUsage,
+        UserPackages,
+        Packages,
+        User,
+        UserPackageServiceUsage,
+      ],
+     
+    ),
+    TransactionModule, // Thêm TransactionModule vào imports
   ],
   controllers: [UserPackagesController],
-  providers: [UserPackagesService, VnpayService, MailService],
+  providers: [
+    UserPackagesService,
+    VnpayService,
+    MailService,
+    TransactionService,
+  ],
 })
 export class UserPackagesModule {}

@@ -24,6 +24,7 @@ import { WeekCheckupModule } from './weekCheckupService/weekCheckup.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { SlotModule } from './slots/slot.module';
 import { CommentsModule } from './comments/comments.module';
+import { TransactionModule } from './transaction/transaction.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { CommentsModule } from './comments/comments.module';
     ReminderModule,
     WeekCheckupModule,
     SlotModule,
+    TransactionModule,
     ScheduleModule.forRoot(),
 
 

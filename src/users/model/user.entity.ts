@@ -10,6 +10,7 @@ import { UserPackageServiceUsage } from './userPackageServiceUsage.entity';
 import { Blog } from 'src/blog/blog.entity';
 import { AppointmentHistory } from 'src/appointment/entities/appointmentHistory.entity';
 import { Comment } from 'src/comments/comment.entity';
+import { Transaction } from 'src/transaction/entities/transaction.entity';
 
 @Entity()
 export class User {
@@ -73,6 +74,9 @@ export class User {
 
   @OneToMany(() => Comment, (comment) => comment.user)
   comments: Comment[];
+
+  @OneToMany(() => Transaction, (transaction) => transaction.user)
+  transactions: Transaction[];
 
   @BeforeInsert()
   async initializeUserBeforeInsert() {

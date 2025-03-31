@@ -7,6 +7,7 @@ import {
   ManyToMany,
   ManyToOne,
   OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { CheckupRecord } from './checkupRecord.entity';
@@ -14,6 +15,8 @@ import { AppointmentServiceEntity } from './appointmentService.entity';
 import { MedicationBill } from './medicationBill.entity';
 import { AppointmentHistory } from './appointmentHistory.entity';
 import { Slot } from 'src/slots/entities/slot.entity';
+import { Transaction } from 'src/transaction/entities/transaction.entity';
+import { ServiceBilling } from './service-billing.entity';
 
 export enum AppointmentStatus {
   AWAITING_DEPOSIT = 'AWAITING_DEPOSIT', // Đang chờ đặt cọc
@@ -58,16 +61,23 @@ export class Appointment {
   @OneToMany(() => AppointmentHistory, (appointmentHistory) => appointmentHistory.appointment)
   history: AppointmentHistory[];
 
-  @OneToMany(
-    () => AppointmentServiceEntity,
-    (appointmentService) => appointmentService.appointment,
-  )
-  appointmentServices: AppointmentServiceEntity[];
+  // @OneToMany(
+  //   () => AppointmentServiceEntity,
+  //   (appointmentService) => appointmentService.appointment,
+  // )
+  // appointmentServices: AppointmentServiceEntity[];
 
   @OneToMany(() => MedicationBill, (bill) => bill.appointment, {
     cascade: true,
   })
   medicationBills: MedicationBill[];
+
+  @OneToMany(() => Transaction, (transaction) => transaction.appointment)
+  transactions: Transaction[];
+
+
+  @OneToOne(() => ServiceBilling, (serviceBilling) => serviceBilling.appointment)
+  serviceBilling: ServiceBilling; // Thêm mối quan hệ OneToOne với ServiceBilling
 
   // @Column({ type: 'boolean', default: false })
   // isFollow: boolean;

@@ -10,7 +10,7 @@ export class MedicationBillDetail {
   @ManyToOne(() => MedicationBill, (bill) => bill.details, { onDelete: 'CASCADE' })
   bill: MedicationBill;
 
-  @ManyToOne(() => Medication, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Medication, { onDelete: 'CASCADE', eager: true  })
   medication: Medication;
 
   @Column({ type: 'int', default: 1 })
