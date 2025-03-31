@@ -589,7 +589,6 @@ export class AppointmentService {
       changedBy,
     });
     await this.appointmentHistoryRepo.save(appointmentHistory);
-    console.log('111');
     appointment.status = AppointmentStatus.IN_PROGRESS;
     const newAppointment = await this.appointmentRepo.save(appointment);
     return {

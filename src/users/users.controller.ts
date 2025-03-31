@@ -51,6 +51,7 @@ export class UsersController {
 
 
   @Get('role/:role')
+  @Public()
   async getUsersByRole(@Param('role') role: Role) {
     return this.usersService.findUsersByRole(role);
   }
