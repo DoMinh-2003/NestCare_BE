@@ -88,8 +88,9 @@ export class BlogsController {
   @Public()
   @ApiBearerAuth()
   @Delete(':id')
-  async deleteBlog(@Param('id') id: string) {
-    const result = await this.blogService.deleteBlog(id);
+  async deleteBlog(@Param('id') id: string, @Req() req: Request) {
+    const userId = (req as any).user.id;
+    const result = await this.blogService.deleteBlog(id, userId);
     return formatResponse<boolean>(result);
   }
 }

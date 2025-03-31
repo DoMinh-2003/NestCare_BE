@@ -15,7 +15,7 @@ export default class CreateBlogDto {
   }
 
   @ApiProperty({
-    example: '663a09a9c7a5420020c1249b',
+    example: 'aec2c016-c4d4-42ff-a328-138e45754895',
     description: 'ID của danh mục blog',
   })
   @IsNotEmpty()

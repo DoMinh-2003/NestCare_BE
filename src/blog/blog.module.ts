@@ -9,10 +9,11 @@ import { Category } from 'src/category/category.entity';
 import { User } from 'src/users/model/user.entity';
 import { CommentsModule } from 'src/comments/comments.module';
 import { Comment } from 'src/comments/comment.entity';
+import { UserPackages } from 'src/userPackages/entities/userPackages.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Blog, Category, User, Comment]),
+    TypeOrmModule.forFeature([Blog, Category, User, Comment, UserPackages]),
     CategoryModule,
     UsersModule,
     CommentsModule,

@@ -386,7 +386,7 @@ export class UserPackagesService {
     const newUserPackage = this.userPackagesRepository.create({
       user,
       package: newPackage,
-      status: UserPackageStatus.PENDING,
+      status: UserPackageStatus.UPGRADE,
       isActive: false,
     });
     const savedNewUserPackage = await this.userPackagesRepository.save(newUserPackage);
