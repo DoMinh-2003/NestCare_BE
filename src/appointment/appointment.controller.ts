@@ -256,4 +256,24 @@ export class AppointmentController {
   }
 
 
+
+  @Post('checkup-preview/:appointmentId')
+  @ApiOperation({ summary: 'Xem trước chi phí dịch vụ khám' })
+  @ApiParam({
+    name: 'appointmentId',
+    type: 'string',
+    description: 'ID của cuộc hẹn',
+  })
+  @ApiBody({
+    type: [ServiceUsedDto],
+    description: 'Danh sách các dịch vụ đã sử dụng',
+  })
+  async previewCheckup(
+    @Param('appointmentId') appointmentId: string,
+    @Body() servicesUsed: ServiceUsedDto[],
+  ) {
+    return this.appointmentService.previewCheckup(appointmentId, servicesUsed);
+  }
+
+
 }
