@@ -104,12 +104,23 @@ export class UsersService {
   // Hàm tìm người dùng theo ID
 
   async findOne(id: string): Promise<User> {
-    const user = await this.userRepository.findOne({ where: { id: id } });
+    const user = await this.userRepository.findOne({
+      where: { id },
+      select: ['id', 'username', 'email', 'fullName', 'phone', 'role', "image", 'isDeleted'],
+    });
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
     return user;
   }
+
+  // async findOne(id: string): Promise<User> {
+  //   const user = await this.userRepository.findOne({ where: { id: id } });
+  //   if (!user) {
+  //     throw new NotFoundException(`User with ID ${id} not found`);
+  //   }
+  //   return user;
+  // }
 
   // Hàm cập nhật người dùng
   async update(id: string, updateUserDto: UpdateUserDTO): Promise<User> {
@@ -179,7 +190,8 @@ export class UsersService {
   ) {
     const qb = this.userRepository
       .createQueryBuilder('user')
-      .where('user.isDeleted = :isDeleted', { isDeleted: false });
+      .where('user.isDeleted = :isDeleted', { isDeleted: false })
+      .addSelect(['user.id', 'user.fullName', 'user.email', 'user.phone', 'user.role', 'user.image', 'user.username', 'user.isDeleted']);;
 
     // Nếu có role thì lọc theo role
     if (role) {
@@ -255,6 +267,7 @@ export class UsersService {
     // 1. Lấy tất cả các bác sĩ
     const allDoctors = await this.userRepository.find({
       where: { role: Role.Doctor, isDeleted: false },
+      select: ['id', 'fullName', 'email', 'phone', 'role', 'image', 'username', 'isDeleted'],
     });
 
     // 2. Lấy tất cả các cuộc hẹn ĐANG CHỜ XÁC NHẬN (PENDING) đã được đặt trong ngày và khung giờ cụ thể
