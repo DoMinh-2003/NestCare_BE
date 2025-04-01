@@ -45,7 +45,6 @@ export class WeekCheckupController {
    @Cron('0 7 * * *') // Chạy lúc 07:00 sáng mỗi ngày
 // @Cron('* * * * *')
   async handleCron() {
-    console.log("hihi");
     await this.weekCheckupService.sendWeeklyCheckupReminders();
   }
 }

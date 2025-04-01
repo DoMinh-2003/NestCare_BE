@@ -9,9 +9,10 @@ import { Appointment } from 'src/appointment/entities/appointment.entity';
 import { CheckupRecord } from 'src/appointment/entities/checkupRecord.entity';
 import { UserPackageServiceUsage } from 'src/users/model/userPackageServiceUsage.entity';
 import { Services } from 'src/services/services.entity';
+import { UserPackages } from 'src/userPackages/entities/userPackages.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([FetalRecord,Services, WeekCheckupServiceEntity,Appointment,CheckupRecord, UserPackageServiceUsage])],
+  imports: [TypeOrmModule.forFeature([FetalRecord,Services, WeekCheckupServiceEntity,Appointment,CheckupRecord, UserPackages])],
   providers: [WeekCheckupService, MailService],
   controllers: [WeekCheckupController],
 })
