@@ -8,12 +8,12 @@ import { ApiBearerAuth, ApiOkResponse, ApiParam, ApiTags } from '@nestjs/swagger
 @Controller('api/transactions')
 @ApiBearerAuth()
 export class TransactionController {
-  constructor(private readonly transactionService: TransactionService) {}
+  constructor(private readonly transactionService: TransactionService) { }
 
-//   @Post()
-//   async create(@Body() createTransactionDto: CreateTransactionDto){
-//     return this.transactionService.create(createTransactionDto);
-//   }
+  //   @Post()
+  //   async create(@Body() createTransactionDto: CreateTransactionDto){
+  //     return this.transactionService.create(createTransactionDto);
+  //   }
 
   @Get('user/:userId')
   @ApiParam({ name: 'userId', type: 'string', description: 'ID of the user to retrieve transactions for' })
@@ -22,10 +22,15 @@ export class TransactionController {
     return this.transactionService.findAllByUser(userId);
   }
 
-//   @Get(':id')
-//   async findOne(@Param('id') id: string) {
-//     return this.transactionService.findOne(id);
-//   }
+  @Get('admin/all')
+  async getAllTransactions() {
+    return this.transactionService.getAllTransactions();
+  }
+
+  //   @Get(':id')
+  //   async findOne(@Param('id') id: string) {
+  //     return this.transactionService.findOne(id);
+  //   }
 
   // Add other controller methods as needed
 }
