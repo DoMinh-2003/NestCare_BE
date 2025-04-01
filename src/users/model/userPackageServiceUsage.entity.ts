@@ -24,6 +24,7 @@ import { UserPackages } from 'src/userPackages/entities/userPackages.entity';
 
     @ManyToOne(() => UserPackages, (userPackage) => userPackage.serviceUsages, {
       onDelete: 'CASCADE',
+      eager: true
     })
     @JoinColumn({ name: 'order_id' }) // Đặt tên khóa ngoại là order_id
     order: UserPackages; // Đơn hàng (gói dịch vụ đã mua)

@@ -93,16 +93,19 @@ export class AppointmentService {
 
     private transactionService: TransactionService,
 
-     private schedulerRegistry: SchedulerRegistry,
+    private schedulerRegistry: SchedulerRegistry,
   ) {}
 
-  private async scheduleNoShowCheck(appointment: Appointment,fetalRecord: FetalRecord, doctor: User) {
+  private async scheduleNoShowCheck(
+    appointment: Appointment,
+    fetalRecord: FetalRecord,
+    doctor: User,
+  ) {
     this.mailService.sendWelcomeEmail(
-
       fetalRecord.mother.email,
-      
+
       'Xác Nhận Lịch Khám Bệnh Viện',
-      
+
       `Chào bạn ${fetalRecord.mother.fullName},
       
       
@@ -124,8 +127,7 @@ export class AppointmentService {
       
       
       Cảm ơn bạn đã tin tưởng dịch vụ của chúng tôi.`,
-      
-      );
+    );
     const now = new Date();
     const appointmentTime = new Date(appointment.appointmentDate);
     const [startHourSchedule, startMinuteSchedule] = appointment.slot.startTime
@@ -147,7 +149,7 @@ export class AppointmentService {
         });
         if (
           appointmentToCheck &&
-          appointmentToCheck.status === AppointmentStatus.PENDING 
+          appointmentToCheck.status === AppointmentStatus.PENDING
         ) {
           appointmentToCheck.status = AppointmentStatus.NO_SHOW;
           await this.appointmentRepo.save(appointmentToCheck);
@@ -161,20 +163,24 @@ export class AppointmentService {
           await this.appointmentHistoryRepo.save(appointmentHistoryEntry);
 
           console.log(`Appointment ${appointment.id} marked as NO_SHOW.`);
-            // Gửi email thông báo hủy lịch do không đến
-            if (appointmentToCheck.fetalRecords && appointmentToCheck.fetalRecords.length > 0 && appointmentToCheck.fetalRecords[0].mother) {
-              this.mailService.sendWelcomeEmail(
-                appointmentToCheck.fetalRecords[0].mother.email,
-                'Thông Báo Hủy Lịch Khám Bệnh Viện',
-                `Chào bạn ${appointmentToCheck.fetalRecords[0].mother.fullName},
+          // Gửi email thông báo hủy lịch do không đến
+          if (
+            appointmentToCheck.fetalRecords &&
+            appointmentToCheck.fetalRecords.length > 0 &&
+            appointmentToCheck.fetalRecords[0].mother
+          ) {
+            this.mailService.sendWelcomeEmail(
+              appointmentToCheck.fetalRecords[0].mother.email,
+              'Thông Báo Hủy Lịch Khám Bệnh Viện',
+              `Chào bạn ${appointmentToCheck.fetalRecords[0].mother.fullName},
   
   Chúng tôi rất tiếc phải thông báo rằng lịch khám của bạn vào ngày ${appointmentToCheck.appointmentDate} lúc ${appointmentToCheck.slot.startTime} với bác sĩ ${appointmentToCheck.doctor.fullName} đã bị hủy do bạn không đến trong vòng 15 phút sau giờ hẹn.
   
   Nếu bạn vẫn có nhu cầu khám, vui lòng đặt lịch hẹn mới.
   
   Cảm ơn bạn.`,
-              );
-            }
+            );
+          }
         }
         this.schedulerRegistry.deleteTimeout(jobName); // Xóa timeout sau khi chạy
       }, fifteenMinutesAfter.getTime() - now.getTime()), // Tính toán độ trễ
@@ -419,22 +425,25 @@ export class AppointmentService {
       AppointmentStatus.CANCELED.toLocaleLowerCase() ===
       status.toLocaleLowerCase()
     ) {
-
       if (changedBy && changedBy.role === Role.User) {
         const appointmentDateTime = new Date(appointment.appointmentDate);
-        const [startHour, startMinute] = appointment.slot.startTime.split(':').map(Number);
+        const [startHour, startMinute] = appointment.slot.startTime
+          .split(':')
+          .map(Number);
         appointmentDateTime.setHours(startHour, startMinute, 0, 0);
 
         const now = new Date();
-        const timeDifferenceInMilliseconds = appointmentDateTime.getTime() - now.getTime();
-        const timeDifferenceInHours = timeDifferenceInMilliseconds / (1000 * 60 * 60);
+        const timeDifferenceInMilliseconds =
+          appointmentDateTime.getTime() - now.getTime();
+        const timeDifferenceInHours =
+          timeDifferenceInMilliseconds / (1000 * 60 * 60);
 
         if (timeDifferenceInHours < 24) {
           throw new BadRequestException(
             'Bạn chỉ có thể hủy lịch hẹn trước 24 giờ so với thời gian đã đặt.',
           );
         }
-        }
+      }
       note = reason;
       const date = appointment.appointmentDate;
 
@@ -456,8 +465,11 @@ export class AppointmentService {
         description: `Thanh toán cọc thành công cho lịch hẹn ${appointmentId}`,
         appointmentId: appointment.id,
       });
-      this.scheduleNoShowCheck(appointment, appointment.fetalRecords[0], appointment.doctor);
-
+      this.scheduleNoShowCheck(
+        appointment,
+        appointment.fetalRecords[0],
+        appointment.doctor,
+      );
     } else if (
       AppointmentStatus.IN_PROGRESS.toLocaleLowerCase() ===
       status.toLocaleLowerCase()
@@ -580,8 +592,12 @@ export class AppointmentService {
     const user = appointment.fetalRecords[0].mother;
 
     const userServiceUsages = await this.userPackageServiceUsageRepo.find({
-      where: { user, slot: MoreThan(0) },
-      relations: ['service'],
+      where: {
+        user,
+        slot: MoreThan(0),
+        order: { isActive: true }, // Thêm điều kiện kiểm tra UserPackage.isActive = true
+      },
+      relations: ['service', 'order', 'order.package'],
     });
 
     const serviceBilling = this.serviceBillingRepo.create({
