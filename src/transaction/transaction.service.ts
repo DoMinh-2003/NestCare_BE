@@ -22,8 +22,8 @@ export class TransactionService {
 
     @InjectRepository(User)
     private userRepo: Repository<User>,
-    
-  ) {}
+
+  ) { }
 
   async create(dto: CreateTransactionDto): Promise<Transaction> {
     const transaction = this.transactionRepo.create(dto);
@@ -53,12 +53,12 @@ export class TransactionService {
     }
 
     if (dto.userId) {
-        const user = await this.userRepo.findOneBy({ id: dto.userId });
-        if (user) {
-          transaction.user = user;
-        }
-        // Xử lý trường hợp không tìm thấy userPackage nếu cần
+      const user = await this.userRepo.findOneBy({ id: dto.userId });
+      if (user) {
+        transaction.user = user;
       }
+      // Xử lý trường hợp không tìm thấy userPackage nếu cần
+    }
 
     return this.transactionRepo.save(transaction);
   }
@@ -79,4 +79,10 @@ export class TransactionService {
   }
 
   // Add other service methods as needed, e.g., find by type, find by status, etc.
+  async getAllTransactions(): Promise<Transaction[]> {
+    return this.transactionRepo.find({
+      relations: ['user', 'appointment', 'userPackage', 'serviceBilling'],
+      order: { createdAt: 'DESC' },
+    });
+  }
 }
