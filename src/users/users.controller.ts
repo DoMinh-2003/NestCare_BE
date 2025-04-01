@@ -28,6 +28,7 @@ import { ToggleDeleteDto } from '../common/models/ToggleDeleteDto';
 import { UpdateUserDTO } from './dto/UpdateUserDTO';
 import { SearchWithPaginationDto } from './dto/searchWithPagination.dto';
 import { Public } from 'src/auth/decorators/public.decorator';
+import { ChangePasswordDto } from './dto/ChangePassword.dto';
 @ApiBearerAuth()
 @ApiTags('Users')
 @Controller('api/users')
@@ -134,5 +135,24 @@ export class UsersController {
   @ApiResponse({ status: 200, description: 'Get user by ID' })
   async findOne(@Param('id') id: string): Promise<User> {
     return this.usersService.findOne(id);
+  }
+
+  @Put('/change-password')
+  @ApiOperation({ summary: 'Đổi mật khẩu người dùng' })
+  @ApiResponse({ status: 200, description: 'Đổi mật khẩu thành công' })
+  @ApiResponse({ status: 400, description: 'Mật khẩu hiện tại không chính xác' })
+  @ApiResponse({ status: 404, description: 'Người dùng không tồn tại' })
+  @ApiBody({ type: ChangePasswordDto })
+  async changePassword(
+    @Request() req: Request,
+    @Body() changePasswordDto: ChangePasswordDto,
+  ) {
+    const userId = (req as any).user.id;
+    return this.usersService.changePassword(
+      userId,
+      changePasswordDto.currentPassword,
+      changePasswordDto.newPassword
+    );
+
   }
 }
