@@ -132,6 +132,10 @@ export class UsersService {
     return this.userRepository.findOne({ where: { username } });
   }
 
+  async findByEmail(email: string): Promise<User | null> {
+    return this.userRepository.findOne({ where: { email } });
+  }
+
   // async findByID(id: string): Promise<User | null> {
   //   return this.userRepository.findOne({ where: { id } });
   // }

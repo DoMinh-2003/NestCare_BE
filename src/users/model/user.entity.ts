@@ -1,4 +1,10 @@
-import { Entity, Column, BeforeInsert, PrimaryColumn, OneToMany } from 'typeorm';
+import {
+  Entity,
+  Column,
+  BeforeInsert,
+  PrimaryColumn,
+  OneToMany,
+} from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { Role } from 'src/common/enums/role.enum';
 import { v4 as uuidv4 } from 'uuid';
@@ -20,7 +26,7 @@ export class User {
   @Column({ unique: true })
   username: string;
 
-  @Column()
+  @Column({ nullable: true })
   password: string;
 
   @Column({ unique: true })
@@ -32,7 +38,7 @@ export class User {
   @Column({ nullable: true })
   image: string;
 
-  @Column({ unique: true })
+  @Column({ unique: true, nullable: true })
   phone: string;
 
   @Column({
@@ -42,8 +48,6 @@ export class User {
   })
   role: Role;
 
-
-
   @Column({ default: false }) // Thêm trường isDeleted
   isDeleted: boolean;
 
@@ -51,7 +55,7 @@ export class User {
   fetalRecords: FetalRecord[]; // Mối quan hệ với bảng FetalRecord
 
   @OneToMany(() => UserPackages, (userPackages) => userPackages.user)
-  userPackages: UserPackages[];  // Mối quan hệ với bảng UserPackages (mua gói)
+  userPackages: UserPackages[]; // Mối quan hệ với bảng UserPackages (mua gói)
 
   @OneToMany(() => Appointment, (appointment) => appointment.doctor)
   appointments: Appointment[]; // Mối quan hệ với bảng FetalRecord
@@ -62,9 +66,11 @@ export class User {
   @OneToMany(() => Reminder, (reminder) => reminder.mother)
   reminders: Reminder[]; // Mối quan hệ với bảng FetalRecord
 
-  @OneToMany(() => UserPackageServiceUsage, (userPackageServiceUsage) => userPackageServiceUsage.user)
+  @OneToMany(
+    () => UserPackageServiceUsage,
+    (userPackageServiceUsage) => userPackageServiceUsage.user,
+  )
   serviceUsages: UserPackageServiceUsage[]; // Mối quan hệ với bảng FetalRecord
-
 
   @OneToMany(() => Blog, (blog) => blog.user)
   blogs: Blog[];
@@ -81,7 +87,9 @@ export class User {
   @BeforeInsert()
   async initializeUserBeforeInsert() {
     this.generateId(); // Gọi generateId trước khi băm mật khẩu
-    this.password = await bcrypt.hash(this.password, 10); // Hash mật khẩu với salt = 10
+    if (this.password) {
+      this.password = await bcrypt.hash(this.password, 10); // Hash mật khẩu với salt = 10
+    }
   }
   generateId() {
     this.id = uuidv4();
