@@ -11,6 +11,7 @@ import { FetalRecord, PregnancyStatus } from 'src/fetal-records/entities/fetal-r
 import { UserPackageServiceUsage } from 'src/users/model/userPackageServiceUsage.entity';
 import { Appointment } from 'src/appointment/entities/appointment.entity';
 import { CheckupRecord } from 'src/appointment/entities/checkupRecord.entity';
+import { UserPackages } from 'src/userPackages/entities/userPackages.entity';
 
 @Injectable()
 export class WeekCheckupService {
@@ -25,8 +26,8 @@ export class WeekCheckupService {
     private fetalRecordRepo: Repository<FetalRecord>,
 
     
-    @InjectRepository(UserPackageServiceUsage)
-    private userPackageServiceUsageRepo: Repository<UserPackageServiceUsage>,
+     @InjectRepository(UserPackages)
+       private userPackagesRepository: Repository<UserPackages>,
 
     
 
@@ -98,10 +99,11 @@ export class WeekCheckupService {
       if (!weekCheckup) continue;
   
       // Kiểm tra mẹ có gói dịch vụ nào không và còn slot không
-      const hasActivePackage = await this.userPackageServiceUsageRepo.findOne({
+      const hasActivePackage = await this.userPackagesRepository.findOne({
         where: {
           user: fetal.mother,
-          slot: MoreThan(0), // Chỉ lấy những gói còn slot
+          // slot: MoreThan(0), // Chỉ lấy những gói còn slot
+          isActive: true 
         },
       });
 
