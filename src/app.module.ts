@@ -25,6 +25,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { SlotModule } from './slots/slot.module';
 import { CommentsModule } from './comments/comments.module';
 import { TransactionModule } from './transaction/transaction.module';
+import { ChatbotModule } from './chatbot/chatbot.module';
 
 @Module({
   imports: [
@@ -85,6 +86,7 @@ import { TransactionModule } from './transaction/transaction.module';
     FetalRecordsModule,
     UserPackagesModule,
     CommentsModule,
+    ChatbotModule
   ],
   controllers: [AppController],
   providers: [

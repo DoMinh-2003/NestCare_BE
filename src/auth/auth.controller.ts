@@ -5,6 +5,7 @@ import { ApiBody, ApiTags } from '@nestjs/swagger';
 import { Public } from './decorators/public.decorator';
 import { RegisterDTO } from './model/register.dto';
 import { sigupDTO } from './model/sign-up.dto';
+import { LoginGGDTO } from './model/loginGG.dto';
 
 @ApiTags('Auth')
 @Controller('api/auth')
@@ -24,5 +25,12 @@ export class AuthController {
   @ApiBody({ type: sigupDTO }) // Định nghĩa DTO cho body
   async register(@Body() signup: sigupDTO) {
     return this.authService.register(signup);
+  }
+
+  @Public()
+  @Post('/login-google')
+  @ApiBody({ type: LoginGGDTO }) // Định nghĩa DTO cho body
+  async loginGoogle(@Body() loginGGDTO: LoginGGDTO): Promise<any> {
+    return this.authService.loginGoogle(loginGGDTO.token);
   }
 }
