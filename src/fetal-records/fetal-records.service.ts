@@ -24,7 +24,7 @@ export class FetalRecordsService {
 
   // Thêm hồ sơ thai nhi
   async create(createFetalRecordDto: CreateFetalRecordDto): Promise<FetalRecord> {
-    const { motherId: userId, ...otherFields } = createFetalRecordDto;
+    const { motherId: userId, name, ...otherFields } = createFetalRecordDto;
     // Find the User entity from the provided user_id
     const mother = await this.userRepository.findOne({ where: { id: userId } });
 
@@ -32,9 +32,18 @@ export class FetalRecordsService {
       throw new Error('Mother (User) not found');
     }
 
+    const existingFetalRecord = await this.fetalRecordRepository.findOne({
+      where: { mother: { id: userId }, name },
+    });
+
+    if (existingFetalRecord) {
+      throw new Error('Tên của thai nhi đã tồn tại cho mẹ này');
+    }
+
     const fetalRecord = this.fetalRecordRepository.create({
       ...otherFields,
-      mother, // Associate the User entity with the fetal record
+      name,
+      mother,
     });
 
     return await this.fetalRecordRepository.save(fetalRecord);
