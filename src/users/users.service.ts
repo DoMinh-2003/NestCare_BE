@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -29,6 +30,24 @@ export class UsersService {
 
   async findAll(): Promise<User[]> {
     return this.userRepository.find();
+  }
+
+  async changePassword(userId: string, currentPassword: string, newPassword: string): Promise<string> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException('Người dùng không tồn tại');
+    }
+
+    const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isPasswordValid) {
+      throw new BadRequestException('Mật khẩu hiện tại không chính xác');
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await this.userRepository.update(userId, { password: hashedPassword });
+
+    return 'Đổi mật khẩu thành công!';
   }
 
   // Hàm đăng ký người dùng
