@@ -56,13 +56,14 @@ export class UsersController {
     return this.usersService.findUsersByRole(role);
   }
 
-  @Put(':id')
+  @Put()
   @ApiResponse({ status: 200, description: 'Update user details' })
   async update(
-    @Param('id') id: string,
+    @Request() req: Request,
     @Body() updateUserDto: UpdateUserDTO,
   ): Promise<User> {
-    return this.usersService.update(id, updateUserDto);
+    const userId = (req as any).user.id
+    return this.usersService.update(userId, updateUserDto);
   }
 
   @Put('toggle-delete/:id')
