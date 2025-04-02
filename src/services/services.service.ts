@@ -109,7 +109,7 @@ export class ServicesService {
     if (!service) {
       throw new CustomHttpException(
         HttpStatus.BAD_REQUEST,
-        `A service with this id: "${id}" not exists`,
+        `Dịch vụ với id này: "${id}" không tồn tại`,
       );
     }
     service.isDeleted = isDeleted; // Cập nhật trạng thái isDeleted

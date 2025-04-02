@@ -22,7 +22,7 @@ export class MedicationService {
     if (isEmptyObject(model)) {
       throw new CustomHttpException(
         HttpStatus.NOT_FOUND,
-        'Model data is empty',
+        'Dữ liệu bị trống',
       );
     }
 
@@ -93,7 +93,7 @@ export class MedicationService {
     if (!medication) {
       throw new CustomHttpException(
         HttpStatus.NOT_FOUND,
-        `A medication with this id: "${id}" does not exist`,
+        `Thuốc với id này: "${id}" không tồn tại`,
       );
     }
 

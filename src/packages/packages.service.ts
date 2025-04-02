@@ -178,7 +178,7 @@ export class PackagesService {
       if (existingPackage) {
         throw new CustomHttpException(
           HttpStatus.BAD_REQUEST,
-          `A package with name "${model.name}" already exists.`,
+          `Gói dịch vụ với tên này "${model.name}" đã tồn tại.`,
         );
       }
     }
@@ -206,7 +206,7 @@ export class PackagesService {
           if (!serviceEntity) {
             throw new CustomHttpException(
               HttpStatus.BAD_REQUEST,
-              `Service with ID: ${service.serviceId} does not exist`,
+              `Dịch vụ với id này: ${service.serviceId} không tồn tại`,
             );
           }
 
@@ -228,7 +228,7 @@ export class PackagesService {
     if (!item) {
       throw new CustomHttpException(
         HttpStatus.BAD_REQUEST,
-        `A package with this id: "${id}" not exists`,
+        `Gói dịch vụ với id này: "${id}" không tồn tại`,
       );
     }
     await this.packagesRepository.update(id, { isDeleted: isDeleted });

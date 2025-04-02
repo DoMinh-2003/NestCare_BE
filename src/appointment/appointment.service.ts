@@ -94,7 +94,7 @@ export class AppointmentService {
     private transactionService: TransactionService,
 
     private schedulerRegistry: SchedulerRegistry,
-  ) {}
+  ) { }
 
   private async scheduleNoShowCheck(
     appointment: Appointment,
@@ -484,7 +484,7 @@ export class AppointmentService {
       appointment.status = AppointmentStatus.IN_PROGRESS;
       const newAppointment = await this.appointmentRepo.save(appointment);
       const serviceBilling = appointment.serviceBilling;
-      
+
       serviceBilling.paymentStatus = 'PAID'
 
       await this.serviceBillingRepo.save(serviceBilling);
