@@ -81,7 +81,9 @@ export class Appointment {
   transactions: Transaction[];
 
 
-  @OneToOne(() => ServiceBilling, (serviceBilling) => serviceBilling.appointment)
+  @OneToOne(() => ServiceBilling, (serviceBilling) => serviceBilling.appointment,{
+    cascade: true,
+  })
   serviceBilling: ServiceBilling; // Thêm mối quan hệ OneToOne với ServiceBilling
 
   // @Column({ type: 'boolean', default: false })

@@ -483,6 +483,11 @@ export class AppointmentService {
 
       appointment.status = AppointmentStatus.IN_PROGRESS;
       const newAppointment = await this.appointmentRepo.save(appointment);
+      const serviceBilling = appointment.serviceBilling;
+      
+      serviceBilling.paymentStatus = 'PAID'
+
+      await this.serviceBillingRepo.save(serviceBilling);
 
       const totalAmountWithoutPackage = appointment.serviceBilling.totalAmount;
 
@@ -603,8 +608,8 @@ export class AppointmentService {
     const serviceBilling = this.serviceBillingRepo.create({
       appointment: appointment,
     });
-    const savedServiceBilling =
-      await this.serviceBillingRepo.save(serviceBilling);
+    const savedServiceBilling = await this.serviceBillingRepo.save(serviceBilling);
+    console.log(savedServiceBilling);
 
     let totalAmountWithoutPackage: number = 0;
     const appointmentServices: AppointmentServiceEntity[] = [];

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from 'src/users/model/user.entity';
@@ -59,8 +59,22 @@ export class UserPackagesService {
       relations: ['packageServices'],
     });
 
+  
+
     if (!user || !packageEntity) {
       throw new Error('User or Package not found');
+    }
+
+    const existingUserPackage = await this.userPackagesRepository.findOne({
+      where: {
+        user: { id: user.id }, // Lọc theo ID của người dùng
+        package: { id: packageEntity.id }, // Lọc theo ID của gói dịch vụ
+        isActive: true
+      },
+    });
+
+    if(existingUserPackage){
+      throw new BadRequestException(`Gói dịch vụ này ${user.fullName} đang sử dụng`);
     }
 
     const userPackage = this.userPackagesRepository.create({
@@ -91,7 +105,7 @@ export class UserPackagesService {
   // Lấy tất cả các gói dịch vụ của một user (mẹ bầu)
   async getUserPackagesByUser(userId: string): Promise<UserPackages[]> {
     return this.userPackagesRepository.find({
-      where: { user: { id: userId }, isDeleted: false, isActive: false },
+      where: { user: { id: userId }},
       relations: ['package', 'user'], // Lấy thông tin gói dịch vụ và thai nhi
     });
   }
