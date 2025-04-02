@@ -80,9 +80,11 @@ export class TransactionService {
 
   // Add other service methods as needed, e.g., find by type, find by status, etc.
   async getAllTransactions(): Promise<Transaction[]> {
-    return this.transactionRepo.find({
+    const response = await this.transactionRepo.find({
       relations: ['user', 'appointment', 'userPackage', 'serviceBilling'],
       order: { createdAt: 'DESC' },
     });
+    console.log(response)
+    return response
   }
 }
