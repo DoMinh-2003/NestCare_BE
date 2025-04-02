@@ -8,6 +8,7 @@ import { UserPackageStatusDto } from './dto/UserPackageStatusDto';
 import { PurchasePackageDto } from './dto/PurchasePackageDto';
 import { Pagination } from 'nestjs-typeorm-paginate';
 import { IsUUID } from 'class-validator';
+import { Public } from 'src/auth/decorators/public.decorator';
 
 @ApiTags("Order")
 @Controller(Api.userPackages)  // Định tuyến API dưới /fetal-records
@@ -58,6 +59,7 @@ export class UserPackagesController {
 
   @ApiBody({ type: UserPackageStatusDto })
   @Put(':id/status')
+  @Public()
   async changeStatus(
     @Param('id') id: string,
     @Body() newStatus: UserPackageStatusDto,

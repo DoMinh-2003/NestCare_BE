@@ -40,6 +40,12 @@ export class VnpayService {
 
     //  const amount =  userPackage.package.price * 100;
 
+     // Tạo một giá trị ngẫu nhiên
+     const randomSuffix = Math.floor(Math.random() * 1000000); // Tạo số ngẫu nhiên từ 0 đến 999999
+
+     // Kết hợp id và số ngẫu nhiên để tạo TxnRef
+     const txnRef = `${id}-${randomSuffix}`;
+
     // Thông tin gửi đến VNPAY
     const vnpParams = {
       vnp_Version: '2.1.0',
@@ -47,7 +53,7 @@ export class VnpayService {
       vnp_TmnCode: this.vnpTmnCode,
       vnp_Locale: 'vn',
       vnp_CurrCode: 'VND',
-      vnp_TxnRef: id,
+      vnp_TxnRef: txnRef,
       vnp_OrderInfo: `Thanh toan cho ma GD: ${id}`,
       vnp_OrderType: 'other',
       vnp_Amount: amount.toString(),
